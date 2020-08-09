@@ -42,6 +42,7 @@ pub struct Auth {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub client_secret: Option<String>,
     pub redirect_url: String,
+    pub user_agent: String,
     pub challenge: String,
     pub state: String,
     pub auth_code: Option<String>,
@@ -52,7 +53,12 @@ impl Auth {
     /// Start of a new oauth2 flow
     /// # Parameters
     /// * `user`
-    pub fn new<A: ToString>(client_id: A, client_secret: Option<A>, redirect_url: A) -> Self {
+    pub fn new<A: ToString>(
+        user_agent: A,
+        client_id: A,
+        client_secret: Option<A>,
+        redirect_url: A,
+    ) -> Self {
         Auth {
             client_id: client_id.to_string(),
             client_secret: if let Some(cs) = client_secret {
@@ -61,7 +67,7 @@ impl Auth {
                 None
             },
             redirect_url: redirect_url.to_string(),
-            // user_agent: user_agent.to_string,
+            user_agent: user_agent.to_string(),
             challenge: Self::new_challenge(CODE_CHALLENGE_LENGTH),
             state: "AUTHSTART".to_string(),
             auth_code: None,
@@ -85,6 +91,11 @@ impl Auth {
             .take(len)
             .collect();
         challenge
+    }
+
+    /// Returns user agent
+    pub fn user_agent(&self) -> &String {
+        &self.user_agent
     }
 
     /// Creates a new authorization url
@@ -311,7 +322,7 @@ mod tests {
         // redirect_url
         let redirect_url = "127.0.0.1:7878";
 
-        let auth = Auth::new(client_id, None, redirect_url);
+        let auth = Auth::new(USER_AGENT, client_id, None, redirect_url);
 
         // construct auth url
         let url = auth.get_auth_url();
