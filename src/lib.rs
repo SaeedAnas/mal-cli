@@ -6,3 +6,6 @@ pub mod api;
 
 /// UI
 pub mod ui;
+
+/// Config
+pub mod config;

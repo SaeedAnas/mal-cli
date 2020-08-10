@@ -1,8 +1,13 @@
 /// structs and methods for oauth2 authentication flow
 pub mod redirect;
 
+/// structs and methods for token management
 pub mod token;
 
+/// methods for cache
+pub mod cache;
+
+use crate::config::AppConfig;
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use serde::{Deserialize, Serialize};
 use serde_json;
@@ -303,6 +308,38 @@ impl Auth {
         let success = response.status().is_success();
         let body = response.text().await?;
         self.handle_response(success, &body)
+    }
+
+    pub fn get_auth(config: &AppConfig) -> Result<Auth, AuthError> {
+        if let Some(mut auth) = cache::load_cached_auth() {
+            let needs_refresh = if let Some(token) = &auth.token {
+                token.expired()
+            } else {
+                return Err(AuthError::TokenNotPresent);
+            };
+            if needs_refresh {
+                auth.refresh().unwrap();
+            }
+            Ok(auth)
+        } else {
+            let auth = Auth::new(
+                config.get_user_agent(),
+                config.client_id.clone(),
+                None,
+                config.get_redirect_uri(),
+            );
+
+            let url = auth.get_auth_url();
+            open(url).unwrap();
+
+            let mut auth = redirect::Server::new(config.get_user_agent(), auth)
+                .go()
+                .unwrap();
+
+            auth.get_access_token().unwrap();
+
+            Ok(auth)
+        }
     }
 }
 
