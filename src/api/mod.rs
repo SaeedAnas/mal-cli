@@ -1,4 +1,5 @@
 /// Anime API endpoints
+pub mod anime;
 /// User animelist API endpoints
 /// manga API endpoints
 /// User mangalist API endpoints
@@ -48,36 +49,31 @@ pub(crate) struct ApiResponse {
     body: Option<String>,
 }
 
-pub(crate) fn apply_general_headers(
+pub(crate) fn apply_headers(
     req: reqwest::blocking::RequestBuilder,
-) -> reqwest::blocking::RequestBuilder {
-    req.header(reqwest::header::ACCEPT, "application/json")
+    auth: &Auth,
+) -> Result<reqwest::blocking::RequestBuilder, Error> {
+    let access_token = match auth.token() {
+        Some(token) => &token.token.access_token,
+        None => return Err(Error::NoAuth),
+    };
+    Ok(req
+        .header(reqwest::header::ACCEPT, "application/json")
         .header(
             reqwest::header::CONTENT_TYPE,
             "application/x-www-form-urlencoded",
         )
-}
-
-pub(crate) fn apply_auth_headers(
-    req: reqwest::blocking::RequestBuilder,
-    auth: &Auth,
-) -> Result<reqwest::blocking::RequestBuilder, Error> {
-    if let Some(token) = auth.token() {
-        Ok(req.header(
+        .header(
             reqwest::header::AUTHORIZATION,
-            format!("Bearer {}", token.token.access_token),
+            format!("Bearer {}", access_token),
         ))
-    } else {
-        Err(Error::NoAuth)
-    }
 }
 
-pub(crate) fn get<U: reqwest::IntoUrl>(url: U, auth: &Auth) -> Result<ApiResponse, Error> {
-    let request = reqwest::blocking::ClientBuilder::new()
-        .user_agent(auth.user_agent())
-        .build()?
-        .get(url);
-    let request = apply_auth_headers(apply_general_headers(request), auth)?;
+pub(crate) fn send(
+    request: reqwest::blocking::RequestBuilder,
+    auth: &Auth,
+) -> Result<ApiResponse, Error> {
+    let request = apply_headers(request, auth)?;
     let response = request.send()?;
     let status = response.status();
     Ok(ApiResponse {
@@ -88,6 +84,14 @@ pub(crate) fn get<U: reqwest::IntoUrl>(url: U, auth: &Auth) -> Result<ApiRespons
             None
         },
     })
+}
+
+pub(crate) fn get<U: reqwest::IntoUrl>(url: U, auth: &Auth) -> Result<ApiResponse, Error> {
+    let request = reqwest::blocking::ClientBuilder::new()
+        .user_agent(auth.user_agent())
+        .build()?
+        .get(url);
+    send(request, auth)
 }
 
 pub(crate) fn patch<U: reqwest::IntoUrl, B: Serialize>(
@@ -100,17 +104,7 @@ pub(crate) fn patch<U: reqwest::IntoUrl, B: Serialize>(
         .build()?
         .patch(url)
         .body(serde_urlencoded::to_string(body)?);
-    let request = apply_auth_headers(apply_general_headers(request), auth)?;
-    let response = request.send()?;
-    let status = response.status();
-    Ok(ApiResponse {
-        status,
-        body: if let Ok(body) = response.text() {
-            Some(body)
-        } else {
-            None
-        },
-    })
+    send(request, auth)
 }
 
 pub(crate) fn delete<U: reqwest::IntoUrl>(url: U, auth: &Auth) -> Result<ApiResponse, Error> {
@@ -118,17 +112,7 @@ pub(crate) fn delete<U: reqwest::IntoUrl>(url: U, auth: &Auth) -> Result<ApiResp
         .user_agent(auth.user_agent())
         .build()?
         .delete(url);
-    let request = apply_auth_headers(apply_general_headers(request), auth)?;
-    let response = request.send()?;
-    let status = response.status();
-    Ok(ApiResponse {
-        status,
-        body: if let Ok(body) = response.text() {
-            Some(body)
-        } else {
-            None
-        },
-    })
+    send(request, auth)
 }
 
 pub(crate) fn handle_response<'a, D: Deserialize<'a>>(res: &'a ApiResponse) -> Result<D, Error> {
