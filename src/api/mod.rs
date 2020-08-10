@@ -1,5 +1,7 @@
 /// Anime API endpoints
 pub mod anime;
+/// API objects
+pub mod objects;
 /// User animelist API endpoints
 /// manga API endpoints
 /// User mangalist API endpoints

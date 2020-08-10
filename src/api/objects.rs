@@ -17,13 +17,18 @@ pub struct PageableData<D: Clone + Debug> {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct Node<N: Clone + std::fmt::Debug> {
+    pub node: N,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Picture {
     pub large: Option<String>,
     pub medium: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-struct AlternativeTitles {
+pub struct AlternativeTitles {
     pub synonyms: Option<Vec<String>>,
     pub en: Option<String>,
     pub jp: Option<String>,
@@ -204,8 +209,7 @@ pub enum Source {
     Music,
 }
 
-#[derive(Clone, Debug, PartialEq, EnumString, IntoStaticStr)]
-#[strum(serialize_all = "snake_case")]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct UserAnimeListStatus {
     pub status: UserWatchStatus,
     pub score: u8,
@@ -258,7 +262,7 @@ pub struct Anime {
     pub my_list_status: Option<UserAnimeListStatus>,
     pub num_episodes: Option<u64>,
     pub start_season: Option<Season>,
-    pub broadcast: Option<broadcast>,
+    pub broadcast: Option<Broadcast>,
     pub source: Option<Source>,
     pub average_episode_duration: Option<u64>,
     pub rating: Option<String>,
@@ -282,6 +286,22 @@ pub enum AnimeRankingType {
     #[strum(serialize = "bypopularity")]
     ByPopularity,
     Favorite,
+    Other(String),
+}
+
+#[derive(Clone, Debug, PartialEq, EnumString, IntoStaticStr)]
+#[strum(serialize_all = "snake_case")]
+pub enum MangaRankingType {
+    All,
+    Manga,
+    Novels,
+    #[strum(serialize = "oneshots")]
+    OneShots,
+    Doujinshi,
+    Manhwa,
+    Manhua,
+    #[strum(serialize = "bypopularity")]
+    ByPopularity,
     Other(String),
 }
 
@@ -450,8 +470,9 @@ pub struct UserInfo {
 }
 
 macro_rules! impl_serialize_deserialize {
-    ($( $x:expr ),*) => {
-        impl Serialize for $x {
+    (for $( $t:ty ),+) => {
+        $(
+        impl Serialize for $t {
             fn serialize<S>(
                 &self,
                 serializer: S,
@@ -463,7 +484,7 @@ macro_rules! impl_serialize_deserialize {
             }
         }
 
-        impl<'de> Deserialize<'de> for $x {
+        impl<'de> Deserialize<'de> for $t {
             fn deserialize<D>(deserializer: D) -> Result<Self, <D as Deserializer<'de>>::Error>
             where
                 D: Deserializer<'de>,
@@ -485,20 +506,21 @@ macro_rules! impl_serialize_deserialize {
                 let s = String::deserialize(deserializer)?;
                 *place = match Self::from_str(s.as_str()) {
                     Ok(n) => n,
-                    Err(_) => Other(s),
+                    Err(_) => Self::Other(s),
                 };
                 Ok(())
             }
         }
+        )*
     };
 }
 
 impl_serialize_deserialize!(
+    for
     NSFW,
     AnimeMediaType,
     AnimeStatus,
     UserWatchStatus,
-    Source,
     AnimeRankingType,
     MangaRankingType,
     Season,
@@ -508,6 +530,43 @@ impl_serialize_deserialize!(
     MangaMediaType,
     MangaStatus
 );
+
+impl Serialize for Source {
+    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(self.into())
+    }
+}
+
+impl<'de> Deserialize<'de> for Source {
+    fn deserialize<D>(deserializer: D) -> Result<Self, <D as Deserializer<'de>>::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        match Self::from_str(s.as_str()) {
+            Ok(n) => Ok(n),
+            Err(_) => Ok(Self::Other),
+        }
+    }
+
+    fn deserialize_in_place<D>(
+        deserializer: D,
+        place: &mut Self,
+    ) -> Result<(), <D as Deserializer<'de>>::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        *place = match Self::from_str(s.as_str()) {
+            Ok(n) => n,
+            Err(_) => Self::Other,
+        };
+        Ok(())
+    }
+}
 
 impl Serialize for TimeWrapper {
     fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
