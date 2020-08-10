@@ -22,7 +22,12 @@ pub fn cache_auth(auth: &Auth) {
 pub fn load_cached_auth() -> Option<Auth> {
     let auth_path = AppConfig::get_paths().unwrap().auth_cache_path;
 
-    let mut auth_file = OpenOptions::new().read(true).open(auth_path).unwrap();
+    let mut auth_file = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .open(auth_path)
+        .unwrap();
 
     let mut cached_string = String::new();
 

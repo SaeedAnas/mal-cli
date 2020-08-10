@@ -338,6 +338,8 @@ impl Auth {
 
             auth.get_access_token().unwrap();
 
+            cache::cache_auth(&auth);
+
             Ok(auth)
         }
     }
@@ -349,8 +351,13 @@ pub fn open(url: Url) -> Result<Output, Error> {
 }
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use super::*;
+    pub fn get_auth() -> Auth {
+        let config = AppConfig::load().unwrap();
+        let auth = Auth::get_auth(&config).unwrap();
+        auth
+    }
     #[test]
     fn token_test() {
         // client_id

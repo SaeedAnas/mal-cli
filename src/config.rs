@@ -94,7 +94,7 @@ impl AppConfig {
                 "Go to the myanimelist api page - https://myanimelist.net",
                 "Click `Create ID` and create an app",
                 &format!(
-                    "Add `http://localhost:{}/callback` to the Redirect URIs",
+                    "Add `http://127.0.0.1:{}` to the Redirect URIs",
                     DEFAULT_PORT
                 ),
                 "You are now ready to authenticate with myanimelist!",
@@ -140,7 +140,7 @@ impl AppConfig {
     }
 
     pub fn get_redirect_uri(&self) -> String {
-        format!("http://localhost:{}/callback", self.get_port())
+        format!("127.0.0.1:{}", self.get_port())
     }
 
     pub fn get_port(&self) -> u16 {

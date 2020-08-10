@@ -27,7 +27,7 @@ pub fn get_anime_list(
 }
 
 #[derive(Clone, Debug, Serialize)]
-pub struct GetAnimeDetailsQuery {
+pub struct GetAnimeDetailQuery {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub fields: Option<String>,
     pub nsfw: bool,
@@ -35,7 +35,7 @@ pub struct GetAnimeDetailsQuery {
 
 pub fn get_anime_details(
     anime_id: u64,
-    query: &GetAnimeDetailsQuery,
+    query: &GetAnimeDetailQuery,
     auth: &Auth,
 ) -> Result<Anime, Error> {
     let response = get(
@@ -126,4 +126,81 @@ pub fn get_suggested_anime(
         auth,
     )?;
     handle_response(&response)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn test_get_anime_list() {
+        let auth = crate::auth::tests::get_auth();
+        let query = GetAnimeListQuery {
+            q: "Code Geass".to_string(),
+            limit: 4,
+            offset: 0,
+            nsfw: false,
+            fields: Some(ALL_ANIME_AND_MANGA_FIELDS.to_string()),
+        };
+        let result = get_anime_list(&query, &auth).unwrap();
+        println!("{:#?}", result);
+        assert!(result.data.len() > 0);
+    }
+
+    #[test]
+    fn test_get_anime_details() {
+        let auth = crate::auth::tests::get_auth();
+        let query = GetAnimeDetailQuery {
+            fields: Some(ALL_ANIME_AND_MANGA_FIELDS.to_string()),
+            nsfw: false,
+        };
+        let result = get_anime_details(1, &query, &auth).unwrap();
+        println!("{:#?}", result);
+        assert_eq!(result.title, "Cowboy Bebop");
+    }
+
+    #[test]
+    fn test_get_anime_ranking() {
+        let auth = crate::auth::tests::get_auth();
+        let query = GetAnimeRankingQuery {
+            ranking_type: AnimeRankingType::All,
+            limit: 4,
+            offset: 0,
+            nsfw: false,
+            fields: Some(ALL_ANIME_AND_MANGA_FIELDS.to_string()),
+        };
+        let result = get_anime_ranking(&query, &auth).unwrap();
+        println!("{:#?}", result);
+        assert!(result.data.len() > 0);
+    }
+    #[test]
+    fn test_get_seasonal_anime() {
+        let auth = crate::auth::tests::get_auth();
+        let query = GetSeasonalAnimeQuery {
+            sort: None,
+            limit: 4,
+            offset: 0,
+            nsfw: false,
+            fields: Some(ALL_ANIME_AND_MANGA_FIELDS.to_string()),
+        };
+        let season = AnimeSeason {
+            year: 2020,
+            season: Season::Summer,
+        };
+        let result = get_seasonal_anime(&season, &query, &auth).unwrap();
+        println!("{:#?}", result);
+        assert!(result.data.len() > 0);
+    }
+    #[test]
+    fn test_get_suggested_anime() {
+        let auth = crate::auth::tests::get_auth();
+        let query = GetSuggestedAnimeQuery {
+            limit: 4,
+            offset: 0,
+            nsfw: false,
+            fields: Some(ALL_ANIME_AND_MANGA_FIELDS.to_string()),
+        };
+        let result = get_suggested_anime(&query, &auth).unwrap();
+        println!("{:#?}", result);
+        assert!(result.data.len() > 0);
+    }
 }
