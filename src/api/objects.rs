@@ -448,3 +448,268 @@ pub struct UserInfo {
     pub time_zone: Option<String>,
     pub is_supporter: Option<bool>,
 }
+
+macro_rules! impl_serialize_deserialize {
+    ($( $x:expr ),*) => {
+        impl Serialize for $x {
+            fn serialize<S>(
+                &self,
+                serializer: S,
+            ) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
+            where
+                S: Serializer,
+            {
+                serializer.serialize_str(self.into())
+            }
+        }
+
+        impl<'de> Deserialize<'de> for $x {
+            fn deserialize<D>(deserializer: D) -> Result<Self, <D as Deserializer<'de>>::Error>
+            where
+                D: Deserializer<'de>,
+            {
+                let s = String::deserialize(deserializer)?;
+                match Self::from_str(s.as_str()) {
+                    Ok(n) => Ok(n),
+                    Err(_) => Ok(Self::Other(s)),
+                }
+            }
+
+            fn deserialize_in_place<D>(
+                deserializer: D,
+                place: &mut Self,
+            ) -> Result<(), <D as Deserializer<'de>>::Error>
+            where
+                D: Deserializer<'de>,
+            {
+                let s = String::deserialize(deserializer)?;
+                *place = match Self::from_str(s.as_str()) {
+                    Ok(n) => n,
+                    Err(_) => Other(s),
+                };
+                Ok(())
+            }
+        }
+    };
+}
+
+impl_serialize_deserialize!(
+    NSFW,
+    AnimeMediaType,
+    AnimeStatus,
+    UserWatchStatus,
+    Source,
+    AnimeRankingType,
+    MangaRankingType,
+    Season,
+    UserStatus,
+    SortStyle,
+    UserReadStatus,
+    MangaMediaType,
+    MangaStatus
+);
+
+impl Serialize for TimeWrapper {
+    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(&self.time.format("%H:%M:%S"))
+    }
+}
+
+impl<'de> Deserialize<'de> for TimeWrapper {
+    fn deserialize<D>(deserializer: D) -> Result<Self, <D as Deserializer<'de>>::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        use serde::de::Error;
+        let s = String::deserialize(deserializer)?;
+        let re = regex::Regex::new(r"([0-9]+):([0-9]+)").unwrap();
+        if let Some(caps) = re.captures(&s) {
+            let hour = caps.get(1).unwrap();
+            let minute = caps.get(2).unwrap();
+            let hour = match hour.as_str().parse::<u8>() {
+                Ok(hour) => hour,
+                Err(e) => return Err(serde::de::Error::custom(e.to_string())),
+            };
+            let minute = match minute.as_str().parse::<u8>() {
+                Ok(minute) => minute,
+                Err(e) => return Err(serde::de::Error::custom(e.to_string())),
+            };
+            let time = match Time::try_from_hms(hour, minute, 0) {
+                Ok(time) => time,
+                Err(e) => return Err(serde::de::Error::custom(e.to_string())),
+            };
+            Ok(TimeWrapper { time })
+        } else {
+            Err(D::Error::custom("Could not parse time"))
+        }
+    }
+
+    fn deserialize_in_place<D>(
+        deserializer: D,
+        place: &mut Self,
+    ) -> Result<(), <D as Deserializer<'de>>::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        use serde::de::Error;
+        let s = String::deserialize(deserializer)?;
+        match Time::parse(&s, "%H:%M:%S") {
+            Ok(time) => {
+                place.time = time;
+                return Ok(());
+            }
+            Err(_) => (),
+        };
+        let re = regex::Regex::new(r"([0-9]+):([0-9]+)").unwrap();
+        if let Some(caps) = re.captures(&s) {
+            let hour = caps.get(1).unwrap();
+            let minute = caps.get(2).unwrap();
+            let hour = match hour.as_str().parse::<u8>() {
+                Ok(hour) => hour,
+                Err(e) => return Err(serde::de::Error::custom(e.to_string())),
+            };
+            let minute = match minute.as_str().parse::<u8>() {
+                Ok(minute) => minute,
+                Err(e) => return Err(serde::de::Error::custom(e.to_string())),
+            };
+            place.time = match Time::try_from_hms(hour, minute, 0) {
+                Ok(time) => time,
+                Err(e) => return Err(serde::de::Error::custom(e.to_string())),
+            };
+            Ok(())
+        } else {
+            Err(D::Error::custom("Could not parse time"))
+        }
+    }
+}
+
+impl Serialize for DateWrapper {
+    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(&self.date.format("%Y-%m-%d"))
+    }
+}
+
+impl<'de> Deserialize<'de> for DateWrapper {
+    fn deserialize<D>(deserializer: D) -> Result<Self, <D as Deserializer<'de>>::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        use serde::de::Error;
+        let s = String::deserialize(deserializer)?;
+        match Date::parse(&s, "%Y-%m-%d") {
+            Ok(date) => return Ok(DateWrapper { date }),
+            Err(_) => (),
+        };
+        let re = regex::Regex::new(r"([0-9]+)-?([0-9]+)?").unwrap();
+        if let Some(caps) = re.captures(&s) {
+            let year = caps.get(1).unwrap();
+            let year = match year.as_str().parse::<i32>() {
+                Ok(year) => year,
+                Err(e) => return Err(serde::de::Error::custom(e.to_string())),
+            };
+            let month = if let Some(month) = caps.get(2) {
+                match month.as_str().parse::<u8>() {
+                    Ok(month) => month,
+                    Err(e) => return Err(serde::de::Error::custom(e.to_string())),
+                }
+            } else {
+                1
+            };
+            let date = match Date::try_from_ymd(year, month, 1) {
+                Ok(date) => date,
+                Err(e) => return Err(serde::de::Error::custom(e.to_string())),
+            };
+            Ok(DateWrapper { date })
+        } else {
+            Err(D::Error::custom("Could not parse date"))
+        }
+    }
+
+    fn deserialize_in_place<D>(
+        deserializer: D,
+        place: &mut Self,
+    ) -> Result<(), <D as Deserializer<'de>>::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        use serde::de::Error;
+        let s = String::deserialize(deserializer)?;
+        match Date::parse(&s, "%Y-%m-%d") {
+            Ok(date) => {
+                place.date = date;
+                return Ok(());
+            }
+            Err(_) => (),
+        };
+        let re = regex::Regex::new(r"([0-9]+)-?([0-9]+)?").unwrap();
+        if let Some(caps) = re.captures(&s) {
+            let year = caps.get(1).unwrap();
+            let year = match year.as_str().parse::<i32>() {
+                Ok(year) => year,
+                Err(e) => return Err(serde::de::Error::custom(e.to_string())),
+            };
+            let month = if let Some(month) = caps.get(2) {
+                match month.as_str().parse::<u8>() {
+                    Ok(month) => month,
+                    Err(e) => return Err(serde::de::Error::custom(e.to_string())),
+                }
+            } else {
+                1
+            };
+            place.date = match Date::try_from_ymd(year, month, 1) {
+                Ok(date) => date,
+                Err(e) => return Err(serde::de::Error::custom(e.to_string())),
+            };
+            Ok(())
+        } else {
+            Err(D::Error::custom("Could not parse date"))
+        }
+    }
+}
+
+impl Serialize for DateTimeWrapper {
+    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(&self.datetime.format("%Y-%m-%dT%H:%M:%S"))
+    }
+}
+
+impl<'de> Deserialize<'de> for DateTimeWrapper {
+    fn deserialize<D>(deserializer: D) -> Result<Self, <D as Deserializer<'de>>::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        use serde::de::Error;
+        let s = String::deserialize(deserializer)?;
+        match PrimitiveDateTime::parse(&s, "%Y-%m-%dT%H:%M:%S") {
+            Ok(datetime) => Ok(DateTimeWrapper { datetime }),
+            Err(e) => Err(D::Error::custom(e.to_string())),
+        }
+    }
+
+    fn deserialize_in_place<D>(
+        deserializer: D,
+        place: &mut Self,
+    ) -> Result<(), <D as Deserializer<'de>>::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        use serde::de::Error;
+        let s = String::deserialize(deserializer)?;
+        match PrimitiveDateTime::parse(&s, "%Y-%m-%dT%H:%M:%S") {
+            Ok(datetime) => {
+                place.datetime = datetime;
+                Ok(())
+            }
+            Err(e) => Err(D::Error::custom(e.to_string())),
+        }
+    }
+}
