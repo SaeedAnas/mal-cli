@@ -86,4 +86,53 @@ pub fn get_user_manga_list<U: ToString>(
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::api::manga::tests::*;
+
+    #[test]
+    fn test_update_manga_list() {
+        let auth = crate::auth::tests::get_auth();
+        let query = UpdateUserMangaStatus {
+            status: Some(UserReadStatus::Reading),
+            is_rereading: None,
+            score: Some(9),
+            num_volumes_read: None,
+            num_chapters_read: Some(62),
+            priority: None,
+            num_times_reread: None,
+            reread_value: None,
+            tags: None,
+            comments: None,
+        };
+        let manga = get_manga("Grand Blue", &auth).unwrap();
+        let result = update_manga_list_status(manga.id, &query, &auth).unwrap();
+        println!("{:#?}", result);
+        assert_eq!(result.num_chapters_read, 62);
+    }
+    #[test]
+    fn test_delete_manga_from_list() {
+        let auth = crate::auth::tests::get_auth();
+        let manga = get_manga("Grand Blue", &auth).unwrap();
+        delete_manga_from_list(manga.id, &auth).unwrap();
+    }
+
+    #[test]
+    fn test_get_user_manga_list() {
+        let auth = crate::auth::tests::get_auth();
+        let query = GetUserMangaListQuery {
+            fields: Some(ALL_ANIME_AND_MANGA_FIELDS.to_string()),
+            status: None,
+            sort: None,
+            limit: 100,
+            offset: 0,
+            nsfw: true,
+        };
+        let result = get_user_manga_list("@me", &query, &auth).unwrap();
+        let mut count = 1;
+
+        for node in result.data.iter() {
+            println!("{}. {}", count, node.node.summary());
+            count += 1;
+        }
+        assert!(result.data.len() > 0);
+    }
 }

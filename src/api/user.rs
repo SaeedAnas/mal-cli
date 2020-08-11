@@ -27,6 +27,6 @@ pub fn get_my_user_information<U: ToString>(
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 }

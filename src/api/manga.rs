@@ -75,7 +75,7 @@ pub fn get_manga_ranking(
 }
 
 #[cfg(test)]
-mod test {
+pub mod tests {
     use super::*;
 
     pub fn get_manga<T: ToString>(q: T, auth: &Auth) -> Result<Manga, Error> {

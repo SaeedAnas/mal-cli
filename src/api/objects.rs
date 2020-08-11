@@ -360,7 +360,7 @@ pub enum SortStyle {
     Other(String),
 }
 
-#[derive(Clone, Debug, PartialEq, EnumString, IntoStaticStr)]
+#[derive(Clone, Debug, PartialEq, EnumString, IntoStaticStr, AsStaticStr)]
 #[strum(serialize_all = "snake_case")]
 pub enum MangaMediaType {
     Unknown,
@@ -451,6 +451,32 @@ pub struct Manga {
     pub authors: Option<Vec<PersonRole>>,
 }
 
+// pub status: UserReadStatus,
+// pub score: u8,
+// pub num_volumes_read: u64,
+// pub num_chapters_read: u64,
+// pub is_rereading: bool,
+// pub start_date: Option<DateWrapper>,
+// pub finish_date: Option<DateWrapper>,
+// pub priority: Option<u8>,
+// pub num_times_reread: Option<u64>,
+// pub reread_value: Option<u8>,
+// pub tags: Option<Vec<String>>,
+// pub comments: Option<String>,
+// pub updated_at: DateTimeWrapper,
+impl Manga {
+    pub fn summary(&self) -> String {
+        let title = &self.title;
+        let score = self.my_list_status.as_ref().unwrap().score;
+        let manga_type: &'static str = self.media_type.as_ref().unwrap().as_static().clone();
+        let progress = &self.my_list_status.as_ref().unwrap().num_chapters_read;
+        let total = &self.num_chapters.as_ref().unwrap();
+        format!(
+            "title: {}, score: {}, type: {}, progress {}/{}",
+            title, score, manga_type, progress, total
+        )
+    }
+}
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct AnimeStatistics {
     pub num_items_watching: u64,
