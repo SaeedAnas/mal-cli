@@ -29,4 +29,14 @@ pub fn get_my_user_information<U: ToString>(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_get_user_information() {
+        let auth = crate::auth::tests::get_auth();
+        let query = GetUserInformationQuery {
+            fields: Some(ALL_USER_FIELDS.to_string()),
+        };
+        let result = get_my_user_information("@me", &query, &auth).unwrap();
+        println!("{:#?}", result);
+    }
 }
