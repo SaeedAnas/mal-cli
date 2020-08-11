@@ -1,4 +1,4 @@
-use super::objects::*;
+use super::data::*;
 use super::Error;
 use super::{delete, get, handle_response, patch, API_URL};
 use crate::auth::Auth;
@@ -88,6 +88,13 @@ mod tests {
     use crate::api::anime::tests::*;
 
     #[test]
+    fn test_delete_anime_from_list() {
+        let auth = crate::auth::tests::get_auth();
+        let anime = get_anime("God of High School", &auth).unwrap();
+        delete_anime_from_list(anime.id, &auth).unwrap();
+    }
+
+    #[test]
     fn test_update_anime_list() {
         let auth = crate::auth::tests::get_auth();
         let query = UpdateUserAnimeListStatusQuery {
@@ -107,13 +114,6 @@ mod tests {
         let result = update_anime_list_status(anime.id, &query, &auth).unwrap();
         println!("{:#?}", result);
         assert_eq!(result.num_episodes_watched, 5);
-    }
-
-    #[test]
-    fn test_delete_anime_from_list() {
-        let auth = crate::auth::tests::get_auth();
-        let anime = get_anime("God of High School", &auth).unwrap();
-        delete_anime_from_list(anime.id, &auth).unwrap();
     }
 
     #[test]

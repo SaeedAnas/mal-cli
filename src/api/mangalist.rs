@@ -1,4 +1,4 @@
-use super::objects::*;
+use super::data::*;
 use super::Error;
 use super::{delete, get, handle_response, patch, API_URL};
 use crate::auth::Auth;
@@ -89,6 +89,13 @@ mod test {
     use crate::api::manga::tests::*;
 
     #[test]
+    fn test_delete_manga_from_list() {
+        let auth = crate::auth::tests::get_auth();
+        let manga = get_manga("Grand Blue", &auth).unwrap();
+        delete_manga_from_list(manga.id, &auth).unwrap();
+    }
+
+    #[test]
     fn test_update_manga_list() {
         let auth = crate::auth::tests::get_auth();
         let query = UpdateUserMangaStatus {
@@ -107,12 +114,6 @@ mod test {
         let result = update_manga_list_status(manga.id, &query, &auth).unwrap();
         println!("{:#?}", result);
         assert_eq!(result.num_chapters_read, 62);
-    }
-    #[test]
-    fn test_delete_manga_from_list() {
-        let auth = crate::auth::tests::get_auth();
-        let manga = get_manga("Grand Blue", &auth).unwrap();
-        delete_manga_from_list(manga.id, &auth).unwrap();
     }
 
     #[test]

@@ -11,7 +11,7 @@ pub use manga::*;
 pub mod mangalist;
 pub use mangalist::*;
 /// API objects
-pub mod objects;
+pub mod data;
 /// User API endpoints
 pub mod user;
 pub use user::*;

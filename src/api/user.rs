@@ -1,4 +1,4 @@
-use super::objects::*;
+use super::data::*;
 use super::Error;
 use super::{get, handle_response, API_URL};
 use crate::auth::Auth;
