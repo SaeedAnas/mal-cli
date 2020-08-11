@@ -428,13 +428,13 @@ pub struct PersonRole {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Manga {
     pub id: u64,
-    pub titl: String,
+    pub title: String,
     pub main_picture: Option<Picture>,
     pub alternative_titles: Option<AlternativeTitles>,
     pub start_date: Option<DateWrapper>,
     pub end_date: Option<DateWrapper>,
     pub synopsis: Option<String>,
-    pub mean: Option<u64>,
+    pub mean: Option<f64>,
     pub rank: Option<u64>,
     pub popularity: Option<u64>,
     pub num_list_users: Option<u64>,

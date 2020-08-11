@@ -102,9 +102,9 @@ mod tests {
             comments: None,
         };
 
-        let anime_id = get_anime_id("God of High School", &auth).unwrap();
+        let anime = get_anime("God of High School", &auth).unwrap();
 
-        let result = update_anime_list_status(anime_id, &query, &auth).unwrap();
+        let result = update_anime_list_status(anime.id, &query, &auth).unwrap();
         println!("{:#?}", result);
         assert_eq!(result.num_episodes_watched, 5);
     }
@@ -112,8 +112,8 @@ mod tests {
     #[test]
     fn test_delete_anime_from_list() {
         let auth = crate::auth::tests::get_auth();
-        let anime_id = get_anime_id("God of High School", &auth).unwrap();
-        delete_anime_from_list(anime_id, &auth).unwrap();
+        let anime = get_anime("God of High School", &auth).unwrap();
+        delete_anime_from_list(anime.id, &auth).unwrap();
     }
 
     #[test]

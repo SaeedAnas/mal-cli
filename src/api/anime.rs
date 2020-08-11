@@ -132,7 +132,7 @@ pub fn get_suggested_anime(
 pub mod tests {
     use super::*;
 
-    pub fn get_anime_id<T: ToString>(q: T, auth: &Auth) -> Result<u64, Error> {
+    pub fn get_anime<T: ToString>(q: T, auth: &Auth) -> Result<Anime, Error> {
         let anime_query = GetAnimeListQuery {
             q: q.to_string(),
             limit: 4,
@@ -140,9 +140,9 @@ pub mod tests {
             nsfw: false,
             fields: Some(ALL_ANIME_AND_MANGA_FIELDS.to_string()),
         };
-        let anime = get_anime_list(&anime_query, &auth).unwrap();
-        let anime_id = anime.data.get(0).unwrap().node.id;
-        Ok(anime_id)
+        let anime_list = get_anime_list(&anime_query, &auth).unwrap();
+        let anime = anime_list.data.get(0).unwrap().node.clone();
+        Ok(anime)
     }
 
     #[test]
@@ -167,9 +167,11 @@ pub mod tests {
             fields: Some(ALL_ANIME_AND_MANGA_FIELDS.to_string()),
             nsfw: false,
         };
-        let result = get_anime_details(1, &query, &auth).unwrap();
+
+        let anime = get_anime("Cowboy Bebop", &auth).unwrap();
+        let result = get_anime_details(anime.id, &query, &auth).unwrap();
         println!("{:#?}", result);
-        assert_eq!(result.title, "Cowboy Bebop");
+        assert_eq!(result.title, anime.title);
     }
 
     #[test]
