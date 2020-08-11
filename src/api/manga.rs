@@ -73,3 +73,8 @@ pub fn get_manga_ranking(
     )?;
     handle_response(&response)
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+}

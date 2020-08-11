@@ -1,12 +1,21 @@
 /// Anime API endpoints
 pub mod anime;
+pub use anime::*;
+/// User animelist API endpoints
+pub mod animelist;
+pub use animelist::*;
+/// manga API endpoints
+pub mod manga;
+pub use manga::*;
+/// User mangalist API endpoints
+pub mod mangalist;
+pub use mangalist::*;
 /// API objects
 pub mod objects;
-/// User animelist API endpoints
-/// manga API endpoints
-/// User mangalist API endpoints
 /// User API endpoints
-/// Forum API endpoints
+pub mod user;
+pub use user::*;
+
 use crate::auth::Auth;
 use serde::{Deserialize, Serialize};
 

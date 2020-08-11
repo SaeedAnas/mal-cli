@@ -129,8 +129,22 @@ pub fn get_suggested_anime(
 }
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use super::*;
+
+    pub fn get_anime_id<T: ToString>(q: T, auth: &Auth) -> Result<u64, Error> {
+        let anime_query = GetAnimeListQuery {
+            q: q.to_string(),
+            limit: 4,
+            offset: 0,
+            nsfw: false,
+            fields: Some(ALL_ANIME_AND_MANGA_FIELDS.to_string()),
+        };
+        let anime = get_anime_list(&anime_query, &auth).unwrap();
+        let anime_id = anime.data.get(0).unwrap().node.id;
+        Ok(anime_id)
+    }
+
     #[test]
     fn test_get_anime_list() {
         let auth = crate::auth::tests::get_auth();

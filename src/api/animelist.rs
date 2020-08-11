@@ -42,7 +42,7 @@ pub fn update_anime_list_status(
 
 pub fn delete_anime_from_list(anime_id: u64, auth: &Auth) -> Result<(), Error> {
     let response = delete(
-        &format!("{}/anime/{}/my_list_status", BASE_URL, anime_id),
+        &format!("{}/anime/{}/my_list_status", API_URL, anime_id),
         auth,
     )?;
     if response.status.is_success() {
@@ -80,4 +80,60 @@ pub fn get_user_anime_list<U: ToString>(
         auth,
     )?;
     handle_response(&response)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::api::anime::tests::*;
+
+    #[test]
+    fn test_update_anime_list() {
+        let auth = crate::auth::tests::get_auth();
+        let query = UpdateUserAnimeListStatusQuery {
+            status: Some(UserWatchStatus::Watching),
+            is_rewatching: None,
+            score: Some(8),
+            num_watched_episodes: Some(5),
+            priority: None,
+            num_times_rewatched: None,
+            rewatch_value: None,
+            tags: None,
+            comments: None,
+        };
+
+        let anime_id = get_anime_id("God of High School", &auth).unwrap();
+
+        let result = update_anime_list_status(anime_id, &query, &auth).unwrap();
+        println!("{:#?}", result);
+        assert_eq!(result.num_episodes_watched, 5);
+    }
+
+    #[test]
+    fn test_delete_anime_from_list() {
+        let auth = crate::auth::tests::get_auth();
+        let anime_id = get_anime_id("God of High School", &auth).unwrap();
+        delete_anime_from_list(anime_id, &auth).unwrap();
+    }
+
+    #[test]
+    fn test_get_user_anime_list() {
+        let auth = crate::auth::tests::get_auth();
+        let query = GetUserAnimeListQuery {
+            fields: Some(ALL_ANIME_AND_MANGA_FIELDS.to_string()),
+            status: None,
+            sort: Some(SortStyle::ListScore),
+            limit: 100,
+            offset: 0,
+            nsfw: true,
+        };
+        let result = get_user_anime_list("@me", &query, &auth).unwrap();
+        let mut count = 1;
+
+        for node in result.data.iter() {
+            println!("{}. {}", count, node.node.summary());
+            count += 1;
+        }
+        assert!(result.data.len() > 0);
+    }
 }

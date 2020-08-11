@@ -34,7 +34,7 @@ pub fn update_manga_list_status(
     auth: &Auth,
 ) -> Result<UserMangaListStatus, Error> {
     let response = patch(
-        &format("{}/manga/{}/my_list_status", API_URL, manga_id),
+        &format!("{}/manga/{}/my_list_status", API_URL, manga_id),
         auth,
         update,
     )?;
@@ -81,4 +81,9 @@ pub fn get_user_manga_list<U: ToString>(
         auth,
     )?;
     handle_response(&response)
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
 }

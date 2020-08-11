@@ -1,6 +1,6 @@
 use super::objects::*;
 use super::Error;
-use super::{delete, get, handle_response, patch, API_URL};
+use super::{get, handle_response, API_URL};
 use crate::auth::Auth;
 use serde::Serialize;
 
@@ -15,7 +15,7 @@ pub fn get_my_user_information<U: ToString>(
     auth: &Auth,
 ) -> Result<UserInfo, Error> {
     let response = get(
-        format!(
+        &format!(
             "{}/users/{}?{}",
             API_URL,
             user.to_string(),
@@ -24,4 +24,9 @@ pub fn get_my_user_information<U: ToString>(
         auth,
     )?;
     handle_response(&response)
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
 }

@@ -1,7 +1,8 @@
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt::Debug;
 use std::str::FromStr;
-use strum_macros::{EnumString, IntoStaticStr};
+use strum::AsStaticRef;
+use strum_macros::{AsStaticStr, EnumString, IntoStaticStr};
 use time::{Date, PrimitiveDateTime, Time};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -152,7 +153,7 @@ pub enum NSFW {
     Other(String),
 }
 
-#[derive(Clone, Debug, PartialEq, EnumString, IntoStaticStr)]
+#[derive(Clone, Debug, PartialEq, EnumString, IntoStaticStr, AsStaticStr)]
 #[strum(serialize_all = "snake_case")]
 pub enum AnimeMediaType {
     Unknown,
@@ -269,6 +270,20 @@ pub struct Anime {
     pub studios: Option<Vec<Studio>>,
     pub pictures: Option<Vec<Picture>>,
     pub background: Option<String>,
+}
+
+impl Anime {
+    pub fn summary(&self) -> String {
+        let title = &self.title;
+        let score = self.my_list_status.as_ref().unwrap().score;
+        let anime_type: &'static str = self.media_type.as_ref().unwrap().as_static().clone();
+        let progress = &self.my_list_status.as_ref().unwrap().num_episodes_watched;
+        let total = &self.num_episodes.as_ref().unwrap();
+        format!(
+            "title: {}, score: {}, type: {}, progress {}/{}",
+            title, score, anime_type, progress, total
+        )
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, EnumString, IntoStaticStr)]
