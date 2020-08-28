@@ -1,7 +1,7 @@
-use super::data::*;
+use super::model::*;
 use super::Error;
 use super::{get, handle_response, API_URL};
-use crate::auth::Auth;
+use crate::auth::OAuth;
 use serde::Serialize;
 
 #[derive(Clone, Debug, Serialize)]
@@ -16,7 +16,7 @@ pub struct GetMangaListQuery {
 
 pub fn get_manga_list(
     query: &GetMangaListQuery,
-    auth: &Auth,
+    auth: &OAuth,
 ) -> Result<PageableData<Vec<Node<Manga>>>, Error> {
     let response = get(
         &format! {"{}/manga?{}", API_URL, serde_urlencoded::to_string(query)?},
@@ -35,7 +35,7 @@ pub struct GetMangaDetailQuery {
 pub fn get_manga_details(
     manga_id: u64,
     query: &GetMangaDetailQuery,
-    auth: &Auth,
+    auth: &OAuth,
 ) -> Result<Manga, Error> {
     let response = get(
         &format!(
@@ -61,7 +61,7 @@ pub struct GetMangaRankingQuery {
 
 pub fn get_manga_ranking(
     query: &GetMangaRankingQuery,
-    auth: &Auth,
+    auth: &OAuth,
 ) -> Result<PageableData<Vec<RankingMangaPair>>, Error> {
     let response = get(
         &format!(
@@ -78,7 +78,7 @@ pub fn get_manga_ranking(
 pub mod tests {
     use super::*;
 
-    pub fn get_manga<T: ToString>(q: T, auth: &Auth) -> Result<Manga, Error> {
+    pub fn get_manga<T: ToString>(q: T, auth: &OAuth) -> Result<Manga, Error> {
         let manga_query = GetMangaListQuery {
             q: q.to_string(),
             limit: 4,

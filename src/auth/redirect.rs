@@ -2,7 +2,7 @@
 /// ex. 127.0.0.1:7878
 /// blocks until one request is recieved (auth redirect) and parses it to get the code
 pub struct Server {
-    auth: super::Auth,
+    auth: super::OAuth,
     app_name: String,
 }
 
@@ -35,7 +35,7 @@ impl From<super::AuthError> for ServerError {
 
 impl Server {
     /// Create the server
-    pub fn new<A: ToString>(app_name: A, auth: super::Auth) -> Self {
+    pub fn new<A: ToString>(app_name: A, auth: super::OAuth) -> Self {
         Server {
             auth,
             app_name: app_name.to_string(),
@@ -44,7 +44,7 @@ impl Server {
 
     /// Run the server.
     /// Blocks until it recieves exactly one request.
-    pub fn go(self) -> Result<super::Auth, ServerError> {
+    pub fn go(self) -> Result<super::OAuth, ServerError> {
         use std::io::prelude::*;
         use std::net::TcpListener;
 

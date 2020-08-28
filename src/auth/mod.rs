@@ -7,7 +7,7 @@ pub mod token;
 /// methods for cache
 pub mod cache;
 
-use crate::config::AppConfig;
+use crate::config::oauth_config::AuthConfig;
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use serde::{Deserialize, Serialize};
 use serde_json;
@@ -42,7 +42,7 @@ impl From<reqwest::Error> for AuthError {
 const CODE_CHALLENGE_LENGTH: usize = 128;
 
 #[derive(Clone, Serialize, Deserialize)]
-pub struct Auth {
+pub struct OAuth {
     pub client_id: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub client_secret: Option<String>,
@@ -54,7 +54,7 @@ pub struct Auth {
     pub token: Option<TokenWrapper>,
 }
 
-impl Auth {
+impl OAuth {
     /// Start of a new oauth2 flow
     /// # Parameters
     /// * `user`
@@ -64,7 +64,7 @@ impl Auth {
         client_secret: Option<A>,
         redirect_url: A,
     ) -> Self {
-        Auth {
+        OAuth {
             client_id: client_id.to_string(),
             client_secret: if let Some(cs) = client_secret {
                 Some(cs.to_string())
@@ -310,7 +310,7 @@ impl Auth {
         self.handle_response(success, &body)
     }
 
-    pub fn get_auth(config: &AppConfig) -> Result<Auth, AuthError> {
+    pub fn get_auth(config: &AuthConfig) -> Result<OAuth, AuthError> {
         if let Some(mut auth) = cache::load_cached_auth() {
             let needs_refresh = if let Some(token) = &auth.token {
                 token.expired()
@@ -322,7 +322,7 @@ impl Auth {
             }
             Ok(auth)
         } else {
-            let auth = Auth::new(
+            let auth = OAuth::new(
                 config.get_user_agent(),
                 config.client_id.clone(),
                 None,
@@ -353,18 +353,18 @@ pub fn open(url: Url) -> Result<Output, Error> {
 #[cfg(test)]
 pub mod tests {
     use super::*;
-    pub fn get_auth() -> Auth {
-        let config = AppConfig::load().unwrap();
-        let auth = Auth::get_auth(&config).unwrap();
+    pub fn get_auth() -> OAuth {
+        let config = AuthConfig::load().unwrap();
+        let auth = OAuth::get_auth(&config).unwrap();
         auth
     }
     #[test]
     fn test_get_auth() {
         // Get config from file
-        let config = AppConfig::load().unwrap();
+        let config = AuthConfig::load().unwrap();
 
         // make auth
-        let auth = Auth::new(
+        let auth = OAuth::new(
             config.get_user_agent(),
             config.client_id.clone(),
             None,
@@ -393,7 +393,7 @@ pub mod tests {
 
     #[test]
     fn test_challenge() {
-        let challenge = Auth::new_challenge(CODE_CHALLENGE_LENGTH);
+        let challenge = OAuth::new_challenge(CODE_CHALLENGE_LENGTH);
 
         assert!(challenge.len() == CODE_CHALLENGE_LENGTH);
         println!("{}", challenge);
@@ -407,6 +407,6 @@ pub mod tests {
     #[should_panic(expected = "len is not in between 48 and 128")]
     fn test_challenge_len() {
         // should panic
-        let _challenge = Auth::new_challenge(5);
+        let _challenge = OAuth::new_challenge(5);
     }
 }

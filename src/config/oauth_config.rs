@@ -5,81 +5,21 @@ use std::{
     path::{Path, PathBuf},
 };
 
-const DEFAULT_PORT: u16 = 7878;
-const DEFAULT_USER_AGENT: &str = "mal-cli";
-const CONFIG_FILE: &str = "mal.yml";
-const CONFIG_DIR: &str = ".config";
-const APP_CONFIG_DIR: &str = "mal-cli";
-const TOKEN_CACHE_FILE: &str = ".mal_token_cache.json";
-
-#[derive(Debug)]
-pub enum ConfigError {
-    /// Represents an invalid config file
-    EmptyConfig,
-    /// Represents a failure to read from input
-    ReadError,
-    /// Represents a nonexistent path error
-    PathError,
-    /// Represents a serde_yaml parse error
-    ParseError(serde_yaml::Error),
-    /// Represents all other failures
-    IOError(std::io::Error),
-}
-
-impl std::error::Error for ConfigError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match *self {
-            ConfigError::EmptyConfig => None,
-            ConfigError::ReadError => None,
-            ConfigError::PathError => None,
-            ConfigError::ParseError(_) => None,
-            ConfigError::IOError(_) => None,
-        }
-    }
-}
-
-impl std::fmt::Display for ConfigError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        match *self {
-            ConfigError::EmptyConfig => write!(f, "Source contains no data"),
-            ConfigError::ReadError => write!(f, "Could not read file"),
-            ConfigError::PathError => write!(f, "Path not found"),
-            ConfigError::ParseError(ref err) => err.fmt(f),
-            ConfigError::IOError(ref err) => err.fmt(f),
-        }
-    }
-}
-
-impl From<std::io::Error> for ConfigError {
-    fn from(err: std::io::Error) -> Self {
-        ConfigError::IOError(err)
-    }
-}
-
-impl From<serde_yaml::Error> for ConfigError {
-    fn from(err: serde_yaml::Error) -> Self {
-        ConfigError::ParseError(err)
-    }
-}
+use super::*;
 
 #[derive(Default, Clone, Debug, PartialEq, Serialize, Deserialize)]
-pub struct AppConfig {
+pub struct AuthConfig {
     pub client_id: String,
     pub user_agent: Option<String>,
     pub port: Option<u16>,
 }
 
-pub struct ConfigPaths {
-    pub config_file_path: PathBuf,
-    pub auth_cache_path: PathBuf,
-}
-
-impl AppConfig {
+impl AuthConfig {
     pub fn load() -> Result<Self, ConfigError> {
         let paths = Self::get_paths()?;
         if paths.config_file_path.exists() {
             let config_string = fs::read_to_string(&paths.config_file_path)?;
-            let config_yml: AppConfig = serde_yaml::from_str(&config_string)?;
+            let config_yml: AuthConfig = serde_yaml::from_str(&config_string)?;
 
             Ok(config_yml)
         } else {
@@ -124,7 +64,7 @@ impl AppConfig {
             stdin().read_line(&mut port)?;
             let port = port.trim().parse::<u16>().unwrap_or(DEFAULT_PORT);
 
-            let config_yml = AppConfig {
+            let config_yml = AuthConfig {
                 client_id,
                 user_agent: Some(user_agent),
                 port: Some(port),
@@ -140,7 +80,7 @@ impl AppConfig {
     }
 
     pub fn get_redirect_uri(&self) -> String {
-        format!("127.0.0.1:{}", self.get_port())
+        format!("127.0.0.1:{}/callback", self.get_port())
     }
 
     pub fn get_port(&self) -> u16 {
@@ -169,7 +109,7 @@ impl AppConfig {
                     fs::create_dir(&app_config_dir)?;
                 }
 
-                let config_file_path = &app_config_dir.join(CONFIG_FILE);
+                let config_file_path = &app_config_dir.join(OAUTH_FILE);
                 let token_cache_path = &app_config_dir.join(TOKEN_CACHE_FILE);
 
                 let paths = ConfigPaths {

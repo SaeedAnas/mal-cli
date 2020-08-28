@@ -1,7 +1,7 @@
-use super::data::*;
+use super::model::*;
 use super::Error;
 use super::{get, handle_response, API_URL};
-use crate::auth::Auth;
+use crate::auth::OAuth;
 use serde::Serialize;
 
 #[derive(Clone, Debug, Serialize)]
@@ -12,7 +12,7 @@ pub struct GetUserInformationQuery {
 pub fn get_my_user_information<U: ToString>(
     user: U,
     query: &GetUserInformationQuery,
-    auth: &Auth,
+    auth: &OAuth,
 ) -> Result<UserInfo, Error> {
     let response = get(
         &format!(

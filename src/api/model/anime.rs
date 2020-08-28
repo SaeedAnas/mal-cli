@@ -169,20 +169,6 @@ pub struct Anime {
     pub background: Option<String>,
 }
 
-impl Anime {
-    pub fn summary(&self) -> String {
-        let title = &self.title;
-        let score = self.my_list_status.as_ref().unwrap().score;
-        let anime_type: &'static str = self.media_type.as_ref().unwrap().as_static().clone();
-        let progress = &self.my_list_status.as_ref().unwrap().num_episodes_watched;
-        let total = &self.num_episodes.as_ref().unwrap();
-        format!(
-            "title: {}, score: {}, type: {}, progress {}/{}",
-            title, score, anime_type, progress, total
-        )
-    }
-}
-
 #[derive(Clone, Debug, PartialEq, EnumString, IntoStaticStr)]
 #[strum(serialize_all = "snake_case")]
 pub enum AnimeRankingType {

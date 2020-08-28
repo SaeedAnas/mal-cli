@@ -11,12 +11,12 @@ pub use manga::*;
 pub mod mangalist;
 pub use mangalist::*;
 /// API objects
-pub mod data;
+pub mod model;
 /// User API endpoints
 pub mod user;
 pub use user::*;
 
-use crate::auth::Auth;
+use crate::auth::OAuth;
 use serde::{Deserialize, Serialize};
 
 pub const API_URL: &str = "https://api.myanimelist.net/v2";
@@ -62,7 +62,7 @@ pub(crate) struct ApiResponse {
 
 pub(crate) fn apply_headers(
     req: reqwest::blocking::RequestBuilder,
-    auth: &Auth,
+    auth: &OAuth,
 ) -> Result<reqwest::blocking::RequestBuilder, Error> {
     let access_token = match auth.token() {
         Some(token) => &token.token.access_token,
@@ -82,7 +82,7 @@ pub(crate) fn apply_headers(
 
 pub(crate) fn send(
     request: reqwest::blocking::RequestBuilder,
-    auth: &Auth,
+    auth: &OAuth,
 ) -> Result<ApiResponse, Error> {
     let request = apply_headers(request, auth)?;
     let response = request.send()?;
@@ -97,7 +97,7 @@ pub(crate) fn send(
     })
 }
 
-pub(crate) fn get<U: reqwest::IntoUrl>(url: U, auth: &Auth) -> Result<ApiResponse, Error> {
+pub(crate) fn get<U: reqwest::IntoUrl>(url: U, auth: &OAuth) -> Result<ApiResponse, Error> {
     let request = reqwest::blocking::ClientBuilder::new()
         .user_agent(auth.user_agent())
         .build()?
@@ -107,7 +107,7 @@ pub(crate) fn get<U: reqwest::IntoUrl>(url: U, auth: &Auth) -> Result<ApiRespons
 
 pub(crate) fn patch<U: reqwest::IntoUrl, B: Serialize>(
     url: U,
-    auth: &Auth,
+    auth: &OAuth,
     body: &B,
 ) -> Result<ApiResponse, Error> {
     let request = reqwest::blocking::ClientBuilder::new()
@@ -118,7 +118,7 @@ pub(crate) fn patch<U: reqwest::IntoUrl, B: Serialize>(
     send(request, auth)
 }
 
-pub(crate) fn delete<U: reqwest::IntoUrl>(url: U, auth: &Auth) -> Result<ApiResponse, Error> {
+pub(crate) fn delete<U: reqwest::IntoUrl>(url: U, auth: &OAuth) -> Result<ApiResponse, Error> {
     let request = reqwest::blocking::ClientBuilder::new()
         .user_agent(auth.user_agent())
         .build()?

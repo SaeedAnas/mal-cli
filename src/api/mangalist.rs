@@ -1,7 +1,7 @@
-use super::data::*;
+use super::model::*;
 use super::Error;
 use super::{delete, get, handle_response, patch, API_URL};
-use crate::auth::Auth;
+use crate::auth::OAuth;
 use serde::Serialize;
 
 #[derive(Clone, Debug, Serialize)]
@@ -31,7 +31,7 @@ pub struct UpdateUserMangaStatus {
 pub fn update_manga_list_status(
     manga_id: u64,
     update: &UpdateUserMangaStatus,
-    auth: &Auth,
+    auth: &OAuth,
 ) -> Result<UserMangaListStatus, Error> {
     let response = patch(
         &format!("{}/manga/{}/my_list_status", API_URL, manga_id),
@@ -41,7 +41,7 @@ pub fn update_manga_list_status(
     handle_response(&response)
 }
 
-pub fn delete_manga_from_list(manga_id: u64, auth: &Auth) -> Result<(), Error> {
+pub fn delete_manga_from_list(manga_id: u64, auth: &OAuth) -> Result<(), Error> {
     let response = delete(
         &format!("{}/manga/{}/my_list_status", API_URL, manga_id),
         auth,
@@ -69,7 +69,7 @@ pub struct GetUserMangaListQuery {
 pub fn get_user_manga_list<U: ToString>(
     user: U,
     query: &GetUserMangaListQuery,
-    auth: &Auth,
+    auth: &OAuth,
 ) -> Result<PageableData<Vec<Node<Manga>>>, Error> {
     let response = get(
         &format!(
@@ -128,12 +128,9 @@ mod test {
             nsfw: true,
         };
         let result = get_user_manga_list("@me", &query, &auth).unwrap();
-        let mut count = 1;
 
-        for node in result.data.iter() {
-            println!("{}. {}", count, node.node.summary());
-            count += 1;
-        }
+        print!("{:#?}", result);
+
         assert!(result.data.len() > 0);
     }
 }

@@ -1,7 +1,7 @@
-use super::data::*;
+use super::model::*;
 use super::Error;
 use super::{delete, get, handle_response, patch, API_URL};
-use crate::auth::Auth;
+use crate::auth::OAuth;
 use serde::Serialize;
 
 /// Update specified anime in animelist
@@ -30,7 +30,7 @@ pub struct UpdateUserAnimeListStatusQuery {
 pub fn update_anime_list_status(
     anime_id: u64,
     update: &UpdateUserAnimeListStatusQuery,
-    auth: &Auth,
+    auth: &OAuth,
 ) -> Result<UserAnimeListStatus, Error> {
     let response = patch(
         &format!("{}/anime/{}/my_list_status", API_URL, anime_id,),
@@ -40,7 +40,7 @@ pub fn update_anime_list_status(
     handle_response(&response)
 }
 
-pub fn delete_anime_from_list(anime_id: u64, auth: &Auth) -> Result<(), Error> {
+pub fn delete_anime_from_list(anime_id: u64, auth: &OAuth) -> Result<(), Error> {
     let response = delete(
         &format!("{}/anime/{}/my_list_status", API_URL, anime_id),
         auth,
@@ -68,7 +68,7 @@ pub struct GetUserAnimeListQuery {
 pub fn get_user_anime_list<U: ToString>(
     user: U,
     query: &GetUserAnimeListQuery,
-    auth: &Auth,
+    auth: &OAuth,
 ) -> Result<PageableData<Vec<Node<Anime>>>, Error> {
     let response = get(
         &format!(
@@ -128,12 +128,9 @@ mod tests {
             nsfw: true,
         };
         let result = get_user_anime_list("@me", &query, &auth).unwrap();
-        let mut count = 1;
 
-        for node in result.data.iter() {
-            println!("{}. {}", count, node.node.summary());
-            count += 1;
-        }
+        print!("{:#?}", result);
+
         assert!(result.data.len() > 0);
     }
 }

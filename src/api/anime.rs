@@ -1,7 +1,7 @@
-use super::data::*;
+use super::model::*;
 use super::Error;
 use super::{get, handle_response, API_URL};
-use crate::auth::Auth;
+use crate::auth::OAuth;
 use serde::Serialize;
 
 /// Get Anime List Request
@@ -17,7 +17,7 @@ pub struct GetAnimeListQuery {
 
 pub fn get_anime_list(
     query: &GetAnimeListQuery,
-    auth: &Auth,
+    auth: &OAuth,
 ) -> Result<PageableData<Vec<Node<Anime>>>, Error> {
     let response = get(
         &format!("{}/anime?{}", API_URL, serde_urlencoded::to_string(query)?),
@@ -36,7 +36,7 @@ pub struct GetAnimeDetailQuery {
 pub fn get_anime_details(
     anime_id: u64,
     query: &GetAnimeDetailQuery,
-    auth: &Auth,
+    auth: &OAuth,
 ) -> Result<Anime, Error> {
     let response = get(
         &format!(
@@ -62,7 +62,7 @@ pub struct GetAnimeRankingQuery {
 
 pub fn get_anime_ranking(
     query: &GetAnimeRankingQuery,
-    auth: &Auth,
+    auth: &OAuth,
 ) -> Result<PageableData<Vec<RankingAnimePair>>, Error> {
     let response = get(
         &format!(
@@ -88,7 +88,7 @@ pub struct GetSeasonalAnimeQuery {
 pub fn get_seasonal_anime(
     season: &AnimeSeason,
     query: &GetSeasonalAnimeQuery,
-    auth: &Auth,
+    auth: &OAuth,
 ) -> Result<PageableData<Vec<Node<Anime>>>, Error> {
     let season_name: &'static str = season.season.clone().into();
     let response = get(
@@ -115,7 +115,7 @@ pub struct GetSuggestedAnimeQuery {
 
 pub fn get_suggested_anime(
     query: &GetSuggestedAnimeQuery,
-    auth: &Auth,
+    auth: &OAuth,
 ) -> Result<PageableData<Vec<Node<Anime>>>, Error> {
     let response = get(
         &format!(
@@ -132,7 +132,7 @@ pub fn get_suggested_anime(
 pub mod tests {
     use super::*;
 
-    pub fn get_anime<T: ToString>(q: T, auth: &Auth) -> Result<Anime, Error> {
+    pub fn get_anime<T: ToString>(q: T, auth: &OAuth) -> Result<Anime, Error> {
         let anime_query = GetAnimeListQuery {
             q: q.to_string(),
             limit: 4,
