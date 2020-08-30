@@ -1,7 +1,8 @@
 [package]
 name = "mal_cli"
 version = "0.1.0"
-authors = ["SaeedAnas <saeedanas396@gmail.com>"]
+authors = ["Anas Saeed <saeedanas396@gmail.com>"]
+description = "Terminal User Interface for myanimelist.net"
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -31,8 +32,9 @@ anyhow = "^1.0"
 thiserror = "1.0"
 serde_yaml = "0.8"
 termion = "1.5"
-clap = "2.33.3"
+clap = "2.33.0"
 eyre = "0.6.0"
 color-eyre = "0.5.1"
 crossterm = "0.17.7"
 tui = { version = "0.10", default-features = false, features = ["crossterm"] }
+better-panic = "0.2.0"
