@@ -2,10 +2,11 @@ use serde::{Deserialize, Serialize};
 use std::{
     fs,
     io::{stdin, Write},
-    path::{Path, PathBuf},
+    path::Path,
 };
 
 use super::*;
+use crate::BANNER;
 
 #[derive(Default, Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AuthConfig {
@@ -23,6 +24,7 @@ impl AuthConfig {
 
             Ok(config_yml)
         } else {
+            println!("{}", BANNER);
             println!(
                 "Config will be saved to {}",
                 paths.config_file_path.display()

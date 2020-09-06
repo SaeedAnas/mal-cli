@@ -70,7 +70,7 @@ pub fn get_user_manga_list<U: ToString>(
     user: U,
     query: &GetUserMangaListQuery,
     auth: &OAuth,
-) -> Result<PageableData<Vec<Node<Manga>>>, Error> {
+) -> Result<Page<Manga>, Error> {
     let response = get(
         &format!(
             "{}/users/{}/mangalist?{}",

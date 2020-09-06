@@ -136,11 +136,3 @@ pub(crate) fn handle_response<'a, D: Deserialize<'a>>(res: &'a ApiResponse) -> R
         Err(Error::NoBody)
     }
 }
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}

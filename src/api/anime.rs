@@ -15,10 +15,7 @@ pub struct GetAnimeListQuery {
     pub fields: Option<String>,
 }
 
-pub fn get_anime_list(
-    query: &GetAnimeListQuery,
-    auth: &OAuth,
-) -> Result<PageableData<Vec<Node<Anime>>>, Error> {
+pub fn get_anime_list(query: &GetAnimeListQuery, auth: &OAuth) -> Result<Page<Anime>, Error> {
     let response = get(
         &format!("{}/anime?{}", API_URL, serde_urlencoded::to_string(query)?),
         auth,
@@ -63,7 +60,7 @@ pub struct GetAnimeRankingQuery {
 pub fn get_anime_ranking(
     query: &GetAnimeRankingQuery,
     auth: &OAuth,
-) -> Result<PageableData<Vec<RankingAnimePair>>, Error> {
+) -> Result<Ranking<RankingAnimePair>, Error> {
     let response = get(
         &format!(
             "{}/anime/ranking?{}",
@@ -89,7 +86,7 @@ pub fn get_seasonal_anime(
     season: &AnimeSeason,
     query: &GetSeasonalAnimeQuery,
     auth: &OAuth,
-) -> Result<PageableData<Vec<Node<Anime>>>, Error> {
+) -> Result<Page<Anime>, Error> {
     let season_name: &'static str = season.season.clone().into();
     let response = get(
         &format!(
@@ -116,7 +113,7 @@ pub struct GetSuggestedAnimeQuery {
 pub fn get_suggested_anime(
     query: &GetSuggestedAnimeQuery,
     auth: &OAuth,
-) -> Result<PageableData<Vec<Node<Anime>>>, Error> {
+) -> Result<Page<Anime>, Error> {
     let response = get(
         &format!(
             "{}/anime/suggestions?{}",

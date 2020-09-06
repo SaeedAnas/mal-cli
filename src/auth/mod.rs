@@ -8,6 +8,7 @@ pub mod token;
 pub mod cache;
 
 use crate::config::oauth_config::AuthConfig;
+use eyre::Result;
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use serde::{Deserialize, Serialize};
 use serde_json;
@@ -35,6 +36,30 @@ impl From<reqwest::Error> for AuthError {
             AuthError::NetworkTimeout
         } else {
             AuthError::UnknownError
+        }
+    }
+}
+
+impl std::error::Error for AuthError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match *self {
+            AuthError::UnknownError => None,
+            AuthError::NetworkTimeout => None,
+            AuthError::InvalidResponse(_) => None,
+            AuthError::AuthNotPresent => None,
+            AuthError::TokenNotPresent => None,
+        }
+    }
+}
+
+impl std::fmt::Display for AuthError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match *self {
+            AuthError::UnknownError => write!(f, "Unknown Error"),
+            AuthError::NetworkTimeout => write!(f, "Network Timeout"),
+            AuthError::InvalidResponse(ref err) => err.fmt(f),
+            AuthError::AuthNotPresent => write!(f, "Auth is not present"),
+            AuthError::TokenNotPresent => write!(f, "Token is not present"),
         }
     }
 }
@@ -274,52 +299,53 @@ impl OAuth {
 
     /// Refresh the token
     pub fn refresh(&mut self) -> Result<(), AuthError> {
-        let request = reqwest::blocking::ClientBuilder::new()
-            .user_agent(USER_AGENT)
-            .build()?
-            .post(TOKEN_URL)
-            .header(reqwest::header::ACCEPT, "application/json")
-            .header(
-                reqwest::header::CONTENT_TYPE,
-                "application/x-www-form-urlencoded",
-            )
-            .body(self.get_token_refresh_query_string()?);
+        if self.token().unwrap().expired() {
+            let request = reqwest::blocking::ClientBuilder::new()
+                .user_agent(USER_AGENT)
+                .build()?
+                .post(TOKEN_URL)
+                .header(reqwest::header::ACCEPT, "application/json")
+                .header(
+                    reqwest::header::CONTENT_TYPE,
+                    "application/x-www-form-urlencoded",
+                )
+                .body(self.get_token_refresh_query_string()?);
 
-        let response = request.send()?;
-        let success = response.status().is_success();
-        let body = response.text()?;
-        self.handle_response(success, &body)
+            let response = request.send()?;
+            let success = response.status().is_success();
+            let body = response.text()?;
+            self.handle_response(success, &body)
+        } else {
+            Ok(())
+        }
     }
 
     /// Refresh the token (async)
     pub async fn refresh_async(&mut self) -> Result<(), AuthError> {
-        let request = reqwest::ClientBuilder::new()
-            .user_agent(USER_AGENT)
-            .build()?
-            .post(TOKEN_URL)
-            .header(reqwest::header::ACCEPT, "application/json")
-            .header(
-                reqwest::header::CONTENT_TYPE,
-                "application/x-www-form-urlencoded",
-            )
-            .body(self.get_token_refresh_query_string()?);
+        if self.token().unwrap().expired() {
+            let request = reqwest::ClientBuilder::new()
+                .user_agent(USER_AGENT)
+                .build()?
+                .post(TOKEN_URL)
+                .header(reqwest::header::ACCEPT, "application/json")
+                .header(
+                    reqwest::header::CONTENT_TYPE,
+                    "application/x-www-form-urlencoded",
+                )
+                .body(self.get_token_refresh_query_string()?);
 
-        let response = request.send().await?;
-        let success = response.status().is_success();
-        let body = response.text().await?;
-        self.handle_response(success, &body)
+            let response = request.send().await?;
+            let success = response.status().is_success();
+            let body = response.text().await?;
+            self.handle_response(success, &body)
+        } else {
+            Ok(())
+        }
     }
 
-    pub fn get_auth(config: &AuthConfig) -> Result<OAuth, AuthError> {
+    pub fn get_auth(config: AuthConfig) -> Result<OAuth, AuthError> {
         if let Some(mut auth) = cache::load_cached_auth() {
-            let needs_refresh = if let Some(token) = &auth.token {
-                token.expired()
-            } else {
-                return Err(AuthError::TokenNotPresent);
-            };
-            if needs_refresh {
-                auth.refresh().unwrap();
-            }
+            auth.refresh()?;
             Ok(auth)
         } else {
             let auth = OAuth::new(
@@ -355,7 +381,7 @@ pub mod tests {
     use super::*;
     pub fn get_auth() -> OAuth {
         let config = AuthConfig::load().unwrap();
-        let auth = OAuth::get_auth(&config).unwrap();
+        let auth = OAuth::get_auth(config).unwrap();
         auth
     }
     #[test]

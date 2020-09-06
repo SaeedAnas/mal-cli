@@ -5,6 +5,7 @@ pub struct AppConfig {
     pub keys: KeyBindings,
     pub theme: Theme,
     pub behavior: BehaviorConfig,
+    pub nsfw: bool,
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -37,6 +38,7 @@ impl AppConfig {
                 tick_rate_milliseconds: 250,
                 show_loading_indicator: true,
             },
+            nsfw: true,
         })
     }
 }

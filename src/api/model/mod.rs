@@ -11,9 +11,11 @@ pub use user::*;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt::Debug;
 use std::str::FromStr;
-use strum::AsStaticRef;
-use strum_macros::{AsStaticStr, EnumString, IntoStaticStr};
+use strum_macros::{EnumString, IntoStaticStr};
 use time::{Date, PrimitiveDateTime, Time};
+
+pub type Page<T> = PageableData<Vec<Node<T>>>;
+pub type Ranking<T> = PageableData<Vec<T>>;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Paging {

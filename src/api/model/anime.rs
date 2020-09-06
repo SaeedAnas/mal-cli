@@ -1,10 +1,7 @@
 use super::*;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
-use std::str::FromStr;
-use strum::AsStaticRef;
 use strum_macros::{AsStaticStr, EnumString, IntoStaticStr};
-use time::{Date, PrimitiveDateTime, Time};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct AnimeSeason {

@@ -69,7 +69,7 @@ pub fn get_user_anime_list<U: ToString>(
     user: U,
     query: &GetUserAnimeListQuery,
     auth: &OAuth,
-) -> Result<PageableData<Vec<Node<Anime>>>, Error> {
+) -> Result<Page<Anime>, Error> {
     let response = get(
         &format!(
             "{}/users/{}/animelist?{}",

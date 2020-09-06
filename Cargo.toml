@@ -38,3 +38,4 @@ color-eyre = "0.5.1"
 crossterm = "0.17.7"
 tui = { version = "0.10", default-features = false, features = ["crossterm"] }
 better-panic = "0.2.0"
+tokio = { version = "0.2", features = ["full"] }

@@ -7,12 +7,7 @@ pub mod app_config;
 pub use app_config::AppConfig;
 pub use oauth_config::AuthConfig;
 
-use serde::{Deserialize, Serialize};
-use std::{
-    fs,
-    io::{stdin, Write},
-    path::{Path, PathBuf},
-};
+use std::path::PathBuf;
 
 const CONFIG_DIR: &str = ".config";
 const APP_CONFIG_DIR: &str = "mal-cli";
@@ -22,7 +17,7 @@ const DEFAULT_USER_AGENT: &str = "mal-cli";
 const OAUTH_FILE: &str = "oauth2.yml";
 const TOKEN_CACHE_FILE: &str = ".mal_token_cache.json";
 
-const CONFIG_FILE: &str = "config.yml";
+const _CONFIG_FILE: &str = "config.yml";
 
 #[derive(Debug)]
 pub enum ConfigError {

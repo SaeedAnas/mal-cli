@@ -14,10 +14,7 @@ pub struct GetMangaListQuery {
     pub fields: Option<String>,
 }
 
-pub fn get_manga_list(
-    query: &GetMangaListQuery,
-    auth: &OAuth,
-) -> Result<PageableData<Vec<Node<Manga>>>, Error> {
+pub fn get_manga_list(query: &GetMangaListQuery, auth: &OAuth) -> Result<Page<Manga>, Error> {
     let response = get(
         &format! {"{}/manga?{}", API_URL, serde_urlencoded::to_string(query)?},
         auth,
@@ -62,7 +59,7 @@ pub struct GetMangaRankingQuery {
 pub fn get_manga_ranking(
     query: &GetMangaRankingQuery,
     auth: &OAuth,
-) -> Result<PageableData<Vec<RankingMangaPair>>, Error> {
+) -> Result<Ranking<RankingMangaPair>, Error> {
     let response = get(
         &format!(
             "{}/manga/ranking?{}",
