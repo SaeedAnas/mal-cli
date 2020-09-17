@@ -1,7 +1,7 @@
 use crossterm::cursor;
-use crossterm::event::{Event, MouseEvent};
 use crossterm::execute;
 use crossterm::terminal;
+use crossterm::{cursor::MoveTo, style::Print, ExecutableCommand};
 use eyre::Result;
 
 use tui::backend::CrosstermBackend;
@@ -10,15 +10,18 @@ use tui::Terminal;
 use std::io::{self, Write};
 use std::panic;
 use std::sync::Arc;
-use std::time::Duration;
 use tokio::sync::Mutex;
 
-use clap::{App as Clap, Arg};
+use clap::{App as ClapApp, Arg};
 
-use mal::app::App;
+use mal::app::*;
 use mal::auth::OAuth;
 use mal::config::{AppConfig, AuthConfig};
+use mal::event;
+use mal::event::key::Key;
+use mal::handlers;
 use mal::network::{IoEvent, Network};
+use mal::ui;
 use mal::BANNER;
 
 fn setup_terminal() -> Result<()> {
@@ -64,7 +67,7 @@ async fn main() -> Result<()> {
     setup_panic_hook();
 
     // Set up clap app and get matches
-    let args = Clap::new(env!("CARGO_PKG_NAME"))
+    let args = ClapApp::new(env!("CARGO_PKG_NAME"))
         .version(env!("CARGO_PKG_VERSION"))
         .author(env!("CARGO_PKG_AUTHORS"))
         .about(env!("CARGO_PKG_DESCRIPTION"))
@@ -93,12 +96,15 @@ async fn main() -> Result<()> {
                 .takes_value(true),
         )
         .get_matches();
+    println!("Here");
 
     // Get config
     let app_config = AppConfig::load()?;
+    println!("Here");
 
     let auth_config = AuthConfig::load()?;
-    let oauth = OAuth::get_auth(auth_config)?;
+    println!("Here");
+    let oauth = OAuth::get_auth_async(auth_config).await?;
 
     let (sync_io_tx, sync_io_rx) = std::sync::mpsc::channel::<IoEvent>();
 
@@ -130,22 +136,70 @@ async fn start_ui(app_config: AppConfig, app: &Arc<Mutex<App>>) -> Result<()> {
     let mut terminal = Terminal::new(backend)?;
     setup_terminal()?;
 
+    let events = event::Events::new(app_config.behavior.tick_rate_milliseconds);
+
     let mut is_first_render = true;
 
     loop {
-        // let mut app = app.lock().await;
-        // // TODO: Deal with resize events
-        // let current_route = app.get_current_route();
-        // terminal.draw(|mut f| match current_route.active_block {
-        //     // TODO: Add active views
+        let mut app = app.lock().await;
 
-        // })
+        let current_route = app.get_current_route();
+        terminal.draw(|mut f| match current_route.active_block {
+            ActiveBlock::Help => {
+                ui::draw_help_menu(&mut f, &app);
+            }
+            ActiveBlock::Error => {
+                ui::draw_error(&mut f, &app);
+            }
+            _ => {
+                ui::draw_main_layout(&mut f, &app);
+            }
+        })?;
 
-        // if current_route.active_block == ActiveBlock::Input {
-        //     terminal.show_cursor()?;
-        // } else {
-        //     terminal.hide_cursor()?;
-        // }
+        if current_route.active_block == ActiveBlock::Input {
+            terminal.show_cursor()?;
+        } else {
+            terminal.hide_cursor()?;
+        }
+
+        let cursor_offset = if app.size.height > ui::util::SMALL_TERMINAL_HEIGHT {
+            2
+        } else {
+            1
+        };
+
+        terminal.backend_mut().execute(MoveTo(
+            cursor_offset + app.input_cursor_position,
+            cursor_offset,
+        ))?;
+
+        match events.next()? {
+            event::Event::Input(key) => {
+                if key == Key::Ctrl('c') {
+                    break;
+                }
+
+                let current_active_block = app.get_current_route().active_block;
+
+                if current_active_block == ActiveBlock::Input {
+                    handlers::input_handler(key, &mut app);
+                } else if key == app.app_config.keys.back {
+                    if app.get_current_route().active_block != ActiveBlock::Input {
+                        let pop_result = match app.pop_navigation_stack() {
+                            Some(ref x) if x.id == RouteId::Search => app.pop_navigation_stack(),
+                            Some(x) => Some(x),
+                            None => None,
+                        };
+                        if pop_result.is_none() {
+                            break;
+                        }
+                    }
+                } else {
+                    handlers::handle_app(key, &mut app);
+                }
+            }
+            _ => {}
+        }
     }
 
     // clean up terminal

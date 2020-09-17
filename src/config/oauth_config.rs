@@ -82,7 +82,7 @@ impl AuthConfig {
     }
 
     pub fn get_redirect_uri(&self) -> String {
-        format!("127.0.0.1:{}/callback", self.get_port())
+        format!("127.0.0.1:{}", self.get_port())
     }
 
     pub fn get_port(&self) -> u16 {

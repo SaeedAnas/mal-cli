@@ -257,6 +257,7 @@ impl OAuth {
                 Err(e) => Err(AuthError::InvalidResponse(e.to_string())),
             }
         } else {
+            println!("{}", body);
             Err(AuthError::UnknownError)
         }
     }
@@ -343,6 +344,32 @@ impl OAuth {
         }
     }
 
+    pub async fn get_auth_async(config: AuthConfig) -> Result<OAuth, AuthError> {
+        if let Some(mut auth) = cache::load_cached_auth() {
+            auth.refresh_async().await?;
+            Ok(auth)
+        } else {
+            let auth = OAuth::new(
+                config.get_user_agent(),
+                config.client_id.clone(),
+                None,
+                config.get_redirect_uri(),
+            );
+
+            let url = auth.get_auth_url();
+            open(url).unwrap();
+
+            let mut auth = redirect::Server::new(config.get_user_agent(), auth)
+                .go()
+                .unwrap();
+
+            auth.get_access_token_async().await.unwrap();
+
+            cache::cache_auth(&auth);
+
+            Ok(auth)
+        }
+    }
     pub fn get_auth(config: AuthConfig) -> Result<OAuth, AuthError> {
         if let Some(mut auth) = cache::load_cached_auth() {
             auth.refresh()?;
@@ -396,6 +423,8 @@ pub mod tests {
             None,
             config.get_redirect_uri(),
         );
+
+        println!("{}", auth.redirect_url);
 
         // create and open url
         let url = auth.get_auth_url();

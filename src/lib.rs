@@ -23,3 +23,9 @@ pub mod app;
 
 /// Network
 pub mod network;
+
+/// Events
+pub mod event;
+
+/// Handlers
+pub mod handlers;

@@ -693,6 +693,7 @@ dependencies = [
  "time 0.2.16",
  "tokio",
  "tui",
+ "unicode-width",
  "url",
  "webbrowser",
 ]
