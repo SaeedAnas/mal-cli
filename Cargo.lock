@@ -682,6 +682,7 @@ dependencies = [
  "rand",
  "regex",
  "reqwest",
+ "rmal",
  "serde",
  "serde_json",
  "serde_urlencoded",
@@ -1137,6 +1138,29 @@ dependencies = [
  "wasm-bindgen-futures",
  "web-sys",
  "winreg",
+]
+
+[[package]]
+name = "rmal"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "dirs",
+ "httparse",
+ "rand",
+ "regex",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "serde_urlencoded",
+ "serde_yaml",
+ "strum",
+ "strum_macros",
+ "termion",
+ "thiserror",
+ "time 0.2.16",
+ "url",
+ "webbrowser",
 ]
 
 [[package]]

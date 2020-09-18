@@ -1,21 +1,12 @@
 [package]
-name = "mal_cli" 
+name = "rmal"
 version = "0.1.0"
-authors = ["Anas Saeed <saeedanas396@gmail.com>"]
-description = "Terminal User Interface for myanimelist.net"
+authors = ["anas"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-[lib]
-name = "mal"
-path = "src/lib.rs"
-
-[[bin]]
-name = "mal"
-path = "src/main.rs"
 
 [dependencies]
-rmal = { path = "./rmal", version = "0.1.0" }
 reqwest = { version = "^0.10.6", features = ["blocking"] }
 serde = { version = "^1.0.114", features = ["derive"] }
 serde_urlencoded = "^0.6.1"
@@ -33,16 +24,3 @@ anyhow = "^1.0"
 thiserror = "1.0"
 serde_yaml = "0.8"
 termion = "1.5"
-clap = "2.33.0"
-eyre = "0.6.0"
-color-eyre = "0.5.1"
-crossterm = "0.17.7"
-tui = { version = "0.10", default-features = false, features = ["crossterm"] }
-better-panic = "0.2.0"
-tokio = { version = "0.2", features = ["full"] }
-unicode-width = "0.1.8"
-
-[workspace]
-members=[
-  "rmal"
-]
