@@ -1,7 +1,11 @@
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}
+pub const BANNER: &str = "
+ __  __    _    _           ____ _     ___ 
+|  \\/  |  / \\  | |         / ___| |   |_ _|
+| |\\/| | / _ \\ | |   _____| |   | |    | | 
+| |  | |/ ___ \\| |__|_____| |___| |___ | | 
+|_|  |_/_/   \\_\\_____|     \\____|_____|___|
+";
+
+pub mod client;
+pub mod oauth2;
+pub mod util;
