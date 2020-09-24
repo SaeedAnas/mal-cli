@@ -98,7 +98,7 @@ impl<'a> Network<'a> {
             fields: Some(ALL_ANIME_AND_MANGA_FIELDS.to_string()),
         };
 
-        match api::get_anime_list(&anime_query, &self.oauth) {
+        match api::get_anime_list(&anime_query, &self.oauth).await {
             Ok(results) => {
                 app.search_results.anime = Some(results);
             }
@@ -108,7 +108,7 @@ impl<'a> Network<'a> {
             }
         };
 
-        match api::get_manga_list(&manga_query, &self.oauth) {
+        match api::get_manga_list(&manga_query, &self.oauth).await {
             Ok(results) => {
                 app.search_results.manga = Some(results);
             }

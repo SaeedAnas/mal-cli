@@ -28,7 +28,7 @@ pub struct UpdateUserMangaStatus {
     pub comments: Option<String>,
 }
 
-pub fn update_manga_list_status(
+pub async fn update_manga_list_status(
     manga_id: u64,
     update: &UpdateUserMangaStatus,
     auth: &OAuth,
@@ -41,7 +41,7 @@ pub fn update_manga_list_status(
     handle_response(&response)
 }
 
-pub fn delete_manga_from_list(manga_id: u64, auth: &OAuth) -> Result<(), Error> {
+pub async fn delete_manga_from_list(manga_id: u64, auth: &OAuth) -> Result<(), Error> {
     let response = delete(
         &format!("{}/manga/{}/my_list_status", API_URL, manga_id),
         auth,
@@ -66,7 +66,7 @@ pub struct GetUserMangaListQuery {
     pub nsfw: bool,
 }
 
-pub fn get_user_manga_list<U: ToString>(
+pub async fn get_user_manga_list<U: ToString>(
     user: U,
     query: &GetUserMangaListQuery,
     auth: &OAuth,
@@ -88,15 +88,15 @@ mod test {
     use super::*;
     use crate::api::manga::tests::*;
 
-    #[test]
-    fn test_delete_manga_from_list() {
+    #[tokio::test]
+    async fn test_delete_manga_from_list() {
         let auth = crate::auth::tests::get_auth();
         let manga = get_manga("Grand Blue", &auth).unwrap();
         delete_manga_from_list(manga.id, &auth).unwrap();
     }
 
-    #[test]
-    fn test_update_manga_list() {
+    #[tokio::test]
+    async fn test_update_manga_list() {
         let auth = crate::auth::tests::get_auth();
         let query = UpdateUserMangaStatus {
             status: Some(UserReadStatus::Reading),
@@ -116,8 +116,8 @@ mod test {
         assert_eq!(result.num_chapters_read, 62);
     }
 
-    #[test]
-    fn test_get_user_manga_list() {
+    #[tokio::test]
+    async fn test_get_user_manga_list() {
         let auth = crate::auth::tests::get_auth();
         let query = GetUserMangaListQuery {
             fields: Some(ALL_ANIME_AND_MANGA_FIELDS.to_string()),

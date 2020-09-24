@@ -15,11 +15,12 @@ pub struct GetAnimeListQuery {
     pub fields: Option<String>,
 }
 
-pub fn get_anime_list(query: &GetAnimeListQuery, auth: &OAuth) -> Result<Page<Anime>, Error> {
+pub async fn get_anime_list(query: &GetAnimeListQuery, auth: &OAuth) -> Result<Page<Anime>, Error> {
     let response = get(
         &format!("{}/anime?{}", API_URL, serde_urlencoded::to_string(query)?),
         auth,
-    )?;
+    )
+    .await?;
     handle_response(&response)
 }
 
@@ -30,7 +31,7 @@ pub struct GetAnimeDetailQuery {
     pub nsfw: bool,
 }
 
-pub fn get_anime_details(
+pub async fn get_anime_details(
     anime_id: u64,
     query: &GetAnimeDetailQuery,
     auth: &OAuth,
@@ -43,7 +44,8 @@ pub fn get_anime_details(
             serde_urlencoded::to_string(query)?
         ),
         auth,
-    )?;
+    )
+    .await?;
     handle_response(&response)
 }
 
@@ -57,7 +59,7 @@ pub struct GetAnimeRankingQuery {
     pub fields: Option<String>,
 }
 
-pub fn get_anime_ranking(
+pub async fn get_anime_ranking(
     query: &GetAnimeRankingQuery,
     auth: &OAuth,
 ) -> Result<Ranking<RankingAnimePair>, Error> {
@@ -68,7 +70,8 @@ pub fn get_anime_ranking(
             serde_urlencoded::to_string(query)?
         ),
         auth,
-    )?;
+    )
+    .await?;
     handle_response(&response)
 }
 
@@ -82,7 +85,7 @@ pub struct GetSeasonalAnimeQuery {
     pub fields: Option<String>,
 }
 
-pub fn get_seasonal_anime(
+pub async fn get_seasonal_anime(
     season: &AnimeSeason,
     query: &GetSeasonalAnimeQuery,
     auth: &OAuth,
@@ -97,7 +100,8 @@ pub fn get_seasonal_anime(
             serde_urlencoded::to_string(query)?
         ),
         auth,
-    )?;
+    )
+    .await?;
     handle_response(&response)
 }
 
@@ -110,7 +114,7 @@ pub struct GetSuggestedAnimeQuery {
     pub fields: Option<String>,
 }
 
-pub fn get_suggested_anime(
+pub async fn get_suggested_anime(
     query: &GetSuggestedAnimeQuery,
     auth: &OAuth,
 ) -> Result<Page<Anime>, Error> {
@@ -121,7 +125,8 @@ pub fn get_suggested_anime(
             serde_urlencoded::to_string(query)?
         ),
         auth,
-    )?;
+    )
+    .await?;
     handle_response(&response)
 }
 
@@ -129,7 +134,7 @@ pub fn get_suggested_anime(
 pub mod tests {
     use super::*;
 
-    pub fn get_anime<T: ToString>(q: T, auth: &OAuth) -> Result<Anime, Error> {
+    pub async fn get_anime<T: ToString>(q: T, auth: &OAuth) -> Result<Anime, Error> {
         let anime_query = GetAnimeListQuery {
             q: q.to_string(),
             limit: 4,
@@ -137,13 +142,13 @@ pub mod tests {
             nsfw: false,
             fields: Some(ALL_ANIME_AND_MANGA_FIELDS.to_string()),
         };
-        let anime_list = get_anime_list(&anime_query, &auth).unwrap();
+        let anime_list = get_anime_list(&anime_query, &auth).await.unwrap();
         let anime = anime_list.data.get(0).unwrap().node.clone();
         Ok(anime)
     }
 
-    #[test]
-    fn test_get_anime_list() {
+    #[tokio::test]
+    async fn test_get_anime_list() {
         let auth = crate::auth::tests::get_auth();
         let query = GetAnimeListQuery {
             q: "Code Geass".to_string(),
@@ -152,27 +157,27 @@ pub mod tests {
             nsfw: false,
             fields: Some(ALL_ANIME_AND_MANGA_FIELDS.to_string()),
         };
-        let result = get_anime_list(&query, &auth).unwrap();
+        let result = get_anime_list(&query, &auth).await.unwrap();
         println!("{:#?}", result);
         assert!(result.data.len() > 0);
     }
 
-    #[test]
-    fn test_get_anime_details() {
+    #[tokio::test]
+    async fn test_get_anime_details() {
         let auth = crate::auth::tests::get_auth();
         let query = GetAnimeDetailQuery {
             fields: Some(ALL_ANIME_AND_MANGA_FIELDS.to_string()),
             nsfw: false,
         };
 
-        let anime = get_anime("Cowboy Bebop", &auth).unwrap();
-        let result = get_anime_details(anime.id, &query, &auth).unwrap();
+        let anime = get_anime("Cowboy Bebop", &auth).await.unwrap();
+        let result = get_anime_details(anime.id, &query, &auth).await.unwrap();
         println!("{:#?}", result);
         assert_eq!(result.title, anime.title);
     }
 
-    #[test]
-    fn test_get_anime_ranking() {
+    #[tokio::test]
+    async fn test_get_anime_ranking() {
         let auth = crate::auth::tests::get_auth();
         let query = GetAnimeRankingQuery {
             ranking_type: AnimeRankingType::All,
@@ -181,12 +186,12 @@ pub mod tests {
             nsfw: false,
             fields: Some(ALL_ANIME_AND_MANGA_FIELDS.to_string()),
         };
-        let result = get_anime_ranking(&query, &auth).unwrap();
+        let result = get_anime_ranking(&query, &auth).await.unwrap();
         println!("{:#?}", result);
         assert!(result.data.len() > 0);
     }
-    #[test]
-    fn test_get_seasonal_anime() {
+    #[tokio::test]
+    async fn test_get_seasonal_anime() {
         let auth = crate::auth::tests::get_auth();
         let query = GetSeasonalAnimeQuery {
             sort: None,
@@ -199,12 +204,12 @@ pub mod tests {
             year: 2020,
             season: Season::Summer,
         };
-        let result = get_seasonal_anime(&season, &query, &auth).unwrap();
+        let result = get_seasonal_anime(&season, &query, &auth).await.unwrap();
         println!("{:#?}", result);
         assert!(result.data.len() > 0);
     }
-    #[test]
-    fn test_get_suggested_anime() {
+    #[tokio::test]
+    async fn test_get_suggested_anime() {
         let auth = crate::auth::tests::get_auth();
         let query = GetSuggestedAnimeQuery {
             limit: 4,
@@ -212,7 +217,7 @@ pub mod tests {
             nsfw: false,
             fields: Some(ALL_ANIME_AND_MANGA_FIELDS.to_string()),
         };
-        let result = get_suggested_anime(&query, &auth).unwrap();
+        let result = get_suggested_anime(&query, &auth).await.unwrap();
         println!("{:#?}", result);
         assert!(result.data.len() > 0);
     }

@@ -17,6 +17,7 @@ pub mod user;
 pub use user::*;
 
 use crate::auth::OAuth;
+use reqwest::{ClientBuilder, RequestBuilder};
 use serde::{Deserialize, Serialize};
 
 pub const API_URL: &str = "https://api.myanimelist.net/v2";
@@ -60,10 +61,9 @@ pub(crate) struct ApiResponse {
     body: Option<String>,
 }
 
-pub(crate) fn apply_headers(
-    req: reqwest::blocking::RequestBuilder,
-    auth: &OAuth,
-) -> Result<reqwest::blocking::RequestBuilder, Error> {
+type ApiResult<T> = Result<T, Error>;
+
+pub(crate) fn apply_headers(req: RequestBuilder, auth: &OAuth) -> ApiResult<RequestBuilder> {
     let access_token = match auth.token() {
         Some(token) => &token.token.access_token,
         None => return Err(Error::NoAuth),
@@ -80,16 +80,13 @@ pub(crate) fn apply_headers(
         ))
 }
 
-pub(crate) fn send(
-    request: reqwest::blocking::RequestBuilder,
-    auth: &OAuth,
-) -> Result<ApiResponse, Error> {
+pub(crate) async fn send(request: RequestBuilder, auth: &OAuth) -> ApiResult<ApiResponse> {
     let request = apply_headers(request, auth)?;
-    let response = request.send()?;
+    let response = request.send().await?;
     let status = response.status();
     Ok(ApiResponse {
         status,
-        body: if let Ok(body) = response.text() {
+        body: if let Ok(body) = response.text().await {
             Some(body)
         } else {
             None
@@ -97,36 +94,36 @@ pub(crate) fn send(
     })
 }
 
-pub(crate) fn get<U: reqwest::IntoUrl>(url: U, auth: &OAuth) -> Result<ApiResponse, Error> {
-    let request = reqwest::blocking::ClientBuilder::new()
+pub(crate) async fn get<U: reqwest::IntoUrl>(url: U, auth: &OAuth) -> ApiResult<ApiResponse> {
+    let request = ClientBuilder::new()
         .user_agent(auth.user_agent())
         .build()?
         .get(url);
-    send(request, auth)
+    send(request, auth).await
 }
 
-pub(crate) fn patch<U: reqwest::IntoUrl, B: Serialize>(
+pub(crate) async fn patch<U: reqwest::IntoUrl, B: Serialize>(
     url: U,
     auth: &OAuth,
     body: &B,
-) -> Result<ApiResponse, Error> {
-    let request = reqwest::blocking::ClientBuilder::new()
+) -> ApiResult<ApiResponse> {
+    let request = ClientBuilder::new()
         .user_agent(auth.user_agent())
         .build()?
         .patch(url)
         .body(serde_urlencoded::to_string(body)?);
-    send(request, auth)
+    send(request, auth).await
 }
 
-pub(crate) fn delete<U: reqwest::IntoUrl>(url: U, auth: &OAuth) -> Result<ApiResponse, Error> {
-    let request = reqwest::blocking::ClientBuilder::new()
+pub(crate) async fn delete<U: reqwest::IntoUrl>(url: U, auth: &OAuth) -> ApiResult<ApiResponse> {
+    let request = ClientBuilder::new()
         .user_agent(auth.user_agent())
         .build()?
         .delete(url);
-    send(request, auth)
+    send(request, auth).await
 }
 
-pub(crate) fn handle_response<'a, D: Deserialize<'a>>(res: &'a ApiResponse) -> Result<D, Error> {
+pub(crate) fn handle_response<'a, D: Deserialize<'a>>(res: &'a ApiResponse) -> ApiResult<D> {
     if !res.status.is_success() {
         return Err(Error::HttpError(res.status));
     }

@@ -14,11 +14,12 @@ pub struct GetMangaListQuery {
     pub fields: Option<String>,
 }
 
-pub fn get_manga_list(query: &GetMangaListQuery, auth: &OAuth) -> Result<Page<Manga>, Error> {
+pub async fn get_manga_list(query: &GetMangaListQuery, auth: &OAuth) -> Result<Page<Manga>, Error> {
     let response = get(
         &format! {"{}/manga?{}", API_URL, serde_urlencoded::to_string(query)?},
         auth,
-    )?;
+    )
+    .await?;
     handle_response(&response)
 }
 
@@ -29,7 +30,7 @@ pub struct GetMangaDetailQuery {
     pub nsfw: bool,
 }
 
-pub fn get_manga_details(
+pub async fn get_manga_details(
     manga_id: u64,
     query: &GetMangaDetailQuery,
     auth: &OAuth,
@@ -42,7 +43,8 @@ pub fn get_manga_details(
             serde_urlencoded::to_string(query)?
         ),
         auth,
-    )?;
+    )
+    .await?;
     handle_response(&response)
 }
 
@@ -56,7 +58,7 @@ pub struct GetMangaRankingQuery {
     pub fields: Option<String>,
 }
 
-pub fn get_manga_ranking(
+pub async fn get_manga_ranking(
     query: &GetMangaRankingQuery,
     auth: &OAuth,
 ) -> Result<Ranking<RankingMangaPair>, Error> {
@@ -67,7 +69,8 @@ pub fn get_manga_ranking(
             serde_urlencoded::to_string(query)?
         ),
         auth,
-    )?;
+    )
+    .await?;
     handle_response(&response)
 }
 
@@ -75,7 +78,7 @@ pub fn get_manga_ranking(
 pub mod tests {
     use super::*;
 
-    pub fn get_manga<T: ToString>(q: T, auth: &OAuth) -> Result<Manga, Error> {
+    pub async fn get_manga<T: ToString>(q: T, auth: &OAuth) -> Result<Manga, Error> {
         let manga_query = GetMangaListQuery {
             q: q.to_string(),
             limit: 4,
@@ -83,13 +86,13 @@ pub mod tests {
             nsfw: false,
             fields: Some(ALL_ANIME_AND_MANGA_FIELDS.to_string()),
         };
-        let manga_list = get_manga_list(&manga_query, &auth).unwrap();
+        let manga_list = get_manga_list(&manga_query, &auth).await.unwrap();
         let manga = manga_list.data.get(0).unwrap().node.clone();
         Ok(manga)
     }
 
-    #[test]
-    fn test_get_manga_list() {
+    #[tokio::test]
+    async fn test_get_manga_list() {
         let auth = crate::auth::tests::get_auth();
         let query = GetMangaListQuery {
             q: "Kaguya-Sama Wa Kokurasetai".to_string(),
@@ -98,25 +101,29 @@ pub mod tests {
             nsfw: false,
             fields: Some(ALL_ANIME_AND_MANGA_FIELDS.to_string()),
         };
-        let result = get_manga_list(&query, &auth).unwrap();
+        let result = get_manga_list(&query, &auth).await.unwrap();
         println!("{:#?}", result);
         assert!(result.data.len() > 0);
     }
-    #[test]
-    fn test_get_manga_details() {
+
+    #[tokio::test]
+    async fn test_get_manga_details() {
         let auth = crate::auth::tests::get_auth();
         let query = GetMangaDetailQuery {
             fields: Some(ALL_ANIME_AND_MANGA_FIELDS.to_string()),
             nsfw: false,
         };
 
-        let manga = get_manga("Kaguya-Sama Wa Kokurasetai", &auth).unwrap();
-        let result = get_manga_details(manga.id, &query, &auth).unwrap();
+        let manga = get_manga("Kaguya-Sama Wa Kokurasetai", &auth)
+            .await
+            .unwrap();
+        let result = get_manga_details(manga.id, &query, &auth).await.unwrap();
         println!("{:#?}", result);
         assert_eq!(result.title, manga.title);
     }
-    #[test]
-    fn test_get_manga_ranking() {
+
+    #[tokio::test]
+    async fn test_get_manga_ranking() {
         let auth = crate::auth::tests::get_auth();
         let query = GetMangaRankingQuery {
             ranking_type: MangaRankingType::All,
@@ -125,7 +132,7 @@ pub mod tests {
             nsfw: false,
             fields: Some(ALL_ANIME_AND_MANGA_FIELDS.to_string()),
         };
-        let result = get_manga_ranking(&query, &auth).unwrap();
+        let result = get_manga_ranking(&query, &auth).await.unwrap();
         println!("{:#?}", result);
         assert!(result.data.len() > 0);
     }

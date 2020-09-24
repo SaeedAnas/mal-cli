@@ -27,7 +27,7 @@ pub struct UpdateUserAnimeListStatusQuery {
     pub comments: Option<String>,
 }
 
-pub fn update_anime_list_status(
+pub async fn update_anime_list_status(
     anime_id: u64,
     update: &UpdateUserAnimeListStatusQuery,
     auth: &OAuth,
@@ -36,15 +36,17 @@ pub fn update_anime_list_status(
         &format!("{}/anime/{}/my_list_status", API_URL, anime_id,),
         auth,
         update,
-    )?;
+    )
+    .await?;
     handle_response(&response)
 }
 
-pub fn delete_anime_from_list(anime_id: u64, auth: &OAuth) -> Result<(), Error> {
+pub async fn delete_anime_from_list(anime_id: u64, auth: &OAuth) -> Result<(), Error> {
     let response = delete(
         &format!("{}/anime/{}/my_list_status", API_URL, anime_id),
         auth,
-    )?;
+    )
+    .await?;
     if response.status.is_success() {
         Ok(())
     } else {
@@ -65,7 +67,7 @@ pub struct GetUserAnimeListQuery {
     pub nsfw: bool,
 }
 
-pub fn get_user_anime_list<U: ToString>(
+pub async fn get_user_anime_list<U: ToString>(
     user: U,
     query: &GetUserAnimeListQuery,
     auth: &OAuth,
@@ -78,7 +80,8 @@ pub fn get_user_anime_list<U: ToString>(
             serde_urlencoded::to_string(query)?
         ),
         auth,
-    )?;
+    )
+    .await?;
     handle_response(&response)
 }
 
@@ -87,15 +90,15 @@ mod tests {
     use super::*;
     use crate::api::anime::tests::*;
 
-    #[test]
-    fn test_delete_anime_from_list() {
+    #[tokio::test]
+    async fn test_delete_anime_from_list() {
         let auth = crate::auth::tests::get_auth();
-        let anime = get_anime("God of High School", &auth).unwrap();
-        delete_anime_from_list(anime.id, &auth).unwrap();
+        let anime = get_anime("God of High School", &auth).await.unwrap();
+        delete_anime_from_list(anime.id, &auth).await.unwrap();
     }
 
-    #[test]
-    fn test_update_anime_list() {
+    #[tokio::test]
+    async fn test_update_anime_list() {
         let auth = crate::auth::tests::get_auth();
         let query = UpdateUserAnimeListStatusQuery {
             status: Some(UserWatchStatus::Watching),
@@ -109,15 +112,17 @@ mod tests {
             comments: None,
         };
 
-        let anime = get_anime("God of High School", &auth).unwrap();
+        let anime = get_anime("God of High School", &auth).await.unwrap();
 
-        let result = update_anime_list_status(anime.id, &query, &auth).unwrap();
+        let result = update_anime_list_status(anime.id, &query, &auth)
+            .await
+            .unwrap();
         println!("{:#?}", result);
         assert_eq!(result.num_episodes_watched, 5);
     }
 
-    #[test]
-    fn test_get_user_anime_list() {
+    #[tokio::test]
+    async fn test_get_user_anime_list() {
         let auth = crate::auth::tests::get_auth();
         let query = GetUserAnimeListQuery {
             fields: Some(ALL_ANIME_AND_MANGA_FIELDS.to_string()),
@@ -127,7 +132,7 @@ mod tests {
             offset: 0,
             nsfw: true,
         };
-        let result = get_user_anime_list("@me", &query, &auth).unwrap();
+        let result = get_user_anime_list("@me", &query, &auth).await.unwrap();
 
         print!("{:#?}", result);
 
