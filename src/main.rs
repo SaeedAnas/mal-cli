@@ -96,14 +96,11 @@ async fn main() -> Result<()> {
                 .takes_value(true),
         )
         .get_matches();
-    println!("Here");
 
     // Get config
     let app_config = AppConfig::load()?;
-    println!("Here");
 
     let auth_config = AuthConfig::load()?;
-    println!("Here");
     let oauth = OAuth::get_auth_async(auth_config).await?;
 
     let (sync_io_tx, sync_io_rx) = std::sync::mpsc::channel::<IoEvent>();

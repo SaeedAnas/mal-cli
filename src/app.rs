@@ -7,7 +7,7 @@ use tui::widgets::ListItem;
 
 const DEFAULT_ROUTE: Route = Route {
     id: RouteId::Home,
-    active_block: ActiveBlock::Empty,
+    active_block: ActiveBlock::Anime,
     hovered_block: ActiveBlock::UserStats,
 };
 
