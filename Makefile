@@ -19,7 +19,7 @@ release-linux-musl: build-linux-musl-release
 	mkdir -p release
 	tar -C ./target/x86_64-unknown-linux-musl/release/ -czvf ./release/mal-cli-linux-musl.tar.gz ./gitui
 
-build-linux-mus-debug:
+build-linux-musl-debug:
 	cargo build --target=x86_64-unknown-linux-musl --no-default-features
 
 build-linux-musl-release:
