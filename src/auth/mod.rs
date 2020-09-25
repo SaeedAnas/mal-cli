@@ -66,7 +66,7 @@ impl std::fmt::Display for AuthError {
 
 const CODE_CHALLENGE_LENGTH: usize = 128;
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OAuth {
     pub client_id: String,
     #[serde(skip_serializing_if = "Option::is_none")]

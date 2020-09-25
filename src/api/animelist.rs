@@ -91,6 +91,7 @@ mod tests {
     use crate::api::anime::tests::*;
 
     #[tokio::test]
+    #[ignore]
     async fn test_delete_anime_from_list() {
         let auth = crate::auth::tests::get_auth();
         let anime = get_anime("God of High School", &auth).await.unwrap();
@@ -112,7 +113,12 @@ mod tests {
             comments: None,
         };
 
-        let anime = get_anime("God of High School", &auth).await.unwrap();
+        let anime = get_anime(
+            "Yahari Ore no Seishun Love Comedy wa Machigatteiru. Kan",
+            &auth,
+        )
+        .await
+        .unwrap();
 
         let result = update_anime_list_status(anime.id, &query, &auth)
             .await

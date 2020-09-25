@@ -37,7 +37,8 @@ pub async fn update_manga_list_status(
         &format!("{}/manga/{}/my_list_status", API_URL, manga_id),
         auth,
         update,
-    )?;
+    )
+    .await?;
     handle_response(&response)
 }
 
@@ -45,7 +46,8 @@ pub async fn delete_manga_from_list(manga_id: u64, auth: &OAuth) -> Result<(), E
     let response = delete(
         &format!("{}/manga/{}/my_list_status", API_URL, manga_id),
         auth,
-    )?;
+    )
+    .await?;
     if response.status.is_success() {
         Ok(())
     } else {
@@ -79,7 +81,8 @@ pub async fn get_user_manga_list<U: ToString>(
             serde_urlencoded::to_string(query)?
         ),
         auth,
-    )?;
+    )
+    .await?;
     handle_response(&response)
 }
 
@@ -91,8 +94,8 @@ mod test {
     #[tokio::test]
     async fn test_delete_manga_from_list() {
         let auth = crate::auth::tests::get_auth();
-        let manga = get_manga("Grand Blue", &auth).unwrap();
-        delete_manga_from_list(manga.id, &auth).unwrap();
+        let manga = get_manga("Grand Blue", &auth).await.unwrap();
+        delete_manga_from_list(manga.id, &auth).await.unwrap();
     }
 
     #[tokio::test]
@@ -110,8 +113,10 @@ mod test {
             tags: None,
             comments: None,
         };
-        let manga = get_manga("Grand Blue", &auth).unwrap();
-        let result = update_manga_list_status(manga.id, &query, &auth).unwrap();
+        let manga = get_manga("Grand Blue", &auth).await.unwrap();
+        let result = update_manga_list_status(manga.id, &query, &auth)
+            .await
+            .unwrap();
         println!("{:#?}", result);
         assert_eq!(result.num_chapters_read, 62);
     }
@@ -127,7 +132,7 @@ mod test {
             offset: 0,
             nsfw: true,
         };
-        let result = get_user_manga_list("@me", &query, &auth).unwrap();
+        let result = get_user_manga_list("@me", &query, &auth).await.unwrap();
 
         print!("{:#?}", result);
 

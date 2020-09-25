@@ -9,7 +9,7 @@ pub struct GetUserInformationQuery {
     pub fields: Option<String>,
 }
 
-pub fn get_my_user_information<U: ToString>(
+pub async fn get_my_user_information<U: ToString>(
     user: U,
     query: &GetUserInformationQuery,
     auth: &OAuth,
@@ -22,7 +22,8 @@ pub fn get_my_user_information<U: ToString>(
             serde_urlencoded::to_string(query)?
         ),
         auth,
-    )?;
+    )
+    .await?;
     handle_response(&response)
 }
 
@@ -30,13 +31,13 @@ pub fn get_my_user_information<U: ToString>(
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_get_user_information() {
+    #[tokio::test]
+    async fn test_get_user_information() {
         let auth = crate::auth::tests::get_auth();
         let query = GetUserInformationQuery {
             fields: Some(ALL_USER_FIELDS.to_string()),
         };
-        let result = get_my_user_information("@me", &query, &auth).unwrap();
+        let result = get_my_user_information("@me", &query, &auth).await.unwrap();
         println!("{:#?}", result);
     }
 }
