@@ -1,5 +1,5 @@
 [package]
-name = "mal_cli" 
+name = "mal-cli" 
 version = "0.1.0"
 authors = ["Anas Saeed <saeedanas396@gmail.com>"]
 description = "Terminal User Interface for myanimelist.net"
