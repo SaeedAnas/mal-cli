@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+    branches: [ '*' ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        rust: [nightly, stable]
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.rust == 'nightly' }}
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: ${{ matrix.rust }}
+        default: true
+        profile: minimal
+        components: clippy
+
+    - name: Build Debug
+      run: |
+        rustc --version
+        cargo build
+    - name: Run tests
+      run: make test
+
+    - name: Run clippy
+      run: |
+        cargo clean
+        make clippy
+    - name: Build Release
+      run: make build-release
+
+  build-linux-musl:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        profile: minimal
+        target: x86_64-unknown-linux-musl
+    - name: Setup MUSL
+      run: |
+        sudo apt-get -qq install musl-tools
+    - name: Build Debug
+      run: |
+        make build-linux-musl-debug
+        ./target/x86_64-unknown-linux-musl/debug/mal --version
+    - name: Build Release
+      run: |
+        make build-linux-musl-release
+        ./target/x86_64-unknown-linux-musl/release/mal --version
+  rustfmt:
+    name: Rustfmt
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        components: rustfmt
+    - run: cargo fmt -- --check
+
+  sec:
+    name: Security audit
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions-rs/audit-check@v1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
