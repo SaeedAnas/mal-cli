@@ -1,6 +1,5 @@
 mod anime;
 mod common;
-mod error;
 mod help;
 mod input;
 mod manga;

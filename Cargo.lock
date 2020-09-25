@@ -668,7 +668,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "mal_cli"
+name = "mal-cli"
 version = "0.1.0"
 dependencies = [
  "anyhow",

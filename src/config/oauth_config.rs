@@ -16,6 +16,7 @@ pub struct AuthConfig {
 }
 
 impl AuthConfig {
+    // TODO: Strip whitespace from user_agent as it can cause code to panic
     pub fn load() -> Result<Self, ConfigError> {
         let paths = Self::get_paths()?;
         if paths.config_file_path.exists() {
