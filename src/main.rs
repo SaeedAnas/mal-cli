@@ -1,28 +1,28 @@
 use crossterm::cursor;
 use crossterm::execute;
 use crossterm::terminal;
-use crossterm::{cursor::MoveTo, style::Print, ExecutableCommand};
+use crossterm::{cursor::MoveTo, ExecutableCommand};
 use eyre::Result;
 
 use tui::backend::CrosstermBackend;
 use tui::Terminal;
 
-use std::io::{self, Write};
-use std::panic;
 use std::sync::Arc;
+use std::{
+    io::{self, Write},
+    panic,
+};
 use tokio::sync::Mutex;
-
-use clap::{App as ClapApp, Arg};
 
 use mal::app::*;
 use mal::auth::OAuth;
+use mal::cli::{Opt, StructOpt};
 use mal::config::{AppConfig, AuthConfig};
 use mal::event;
 use mal::event::key::Key;
 use mal::handlers;
 use mal::network::{IoEvent, Network};
 use mal::ui;
-use mal::BANNER;
 
 fn setup_terminal() -> Result<()> {
     let mut stdout = io::stdout();
@@ -53,6 +53,7 @@ fn cleanup_terminal() -> Result<()> {
     Ok(())
 }
 
+/// Makes sure that the terminal cleans up even when there's a panic
 fn setup_panic_hook() {
     panic::set_hook(Box::new(|panic_info| {
         cleanup_terminal().unwrap();
@@ -63,39 +64,9 @@ fn setup_panic_hook() {
 #[tokio::main]
 async fn main() -> Result<()> {
     better_panic::install();
-
     setup_panic_hook();
 
-    // Set up clap app and get matches
-    let args = ClapApp::new(env!("CARGO_PKG_NAME"))
-        .version(env!("CARGO_PKG_VERSION"))
-        .author(env!("CARGO_PKG_AUTHORS"))
-        .about(env!("CARGO_PKG_DESCRIPTION"))
-        .before_help(BANNER)
-        .after_help(
-            "\
-        Your Config is stored in $HOME/.config/mal-cli/mal.yml\n\
-        Your MAL Client ID is stored in $HOME/.config/mal-cli/oauth2.yml\
-            ",
-        )
-        .arg(
-            Arg::with_name("search")
-                .short("s")
-                .long("search")
-                .value_name("INPUT")
-                .help("Searches for anime/manga")
-                .takes_value(true),
-        )
-        .arg(
-            Arg::with_name("seasonal")
-                .short("S")
-                .long("seasonal")
-                .value_name("Season>,<Year")
-                .default_value("now")
-                .help("Shows Seasonal Anime")
-                .takes_value(true),
-        )
-        .get_matches();
+    let opt: Opt = Opt::from_args();
 
     // Get config
     let app_config = AppConfig::load()?;

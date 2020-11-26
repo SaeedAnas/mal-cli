@@ -33,14 +33,13 @@ anyhow = "^1.0"
 thiserror = "1.0"
 serde_yaml = "0.8"
 termion = "1.5"
-clap = "2.33.0"
 eyre = "0.6.0"
-color-eyre = "0.5.1"
 crossterm = "0.17.7"
 tui = { version = "0.10", default-features = false, features = ["crossterm"] }
 better-panic = "0.2.0"
 tokio = { version = "0.2", features = ["full"] }
 unicode-width = "0.1.8"
+structopt = "0.3.20"
 
 [workspace]
 members=[

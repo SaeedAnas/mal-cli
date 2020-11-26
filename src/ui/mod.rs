@@ -2,7 +2,6 @@ pub mod help;
 pub mod util;
 use crate::api::model::*;
 use crate::app::*;
-use crate::BANNER;
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},

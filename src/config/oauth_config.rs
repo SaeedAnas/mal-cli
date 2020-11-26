@@ -34,7 +34,7 @@ impl AuthConfig {
             println!("\nHow to get setup:\n");
 
             let instructions = [
-                "Go to the myanimelist api page - https://myanimelist.net",
+                "Go to the myanimelist api page - https://myanimelist.net/apiconfig",
                 "Click `Create ID` and create an app",
                 &format!(
                     "Add `http://127.0.0.1:{}` to the Redirect URIs",
